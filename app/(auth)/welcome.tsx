@@ -1,6 +1,7 @@
 import React from "react";
 import * as AppleAuthentication from "expo-apple-authentication";
 import Vehicle from "@/components/Vehicle";
+import { GOOGLE_READY, GoogleSignIn } from "@/components/GoogleSignIn";
 import { DEMO } from "@/constants/config";
 import { CLASS_LABEL, VehicleClass } from "@/lib/fleet";
 import Logo from "@/components/Logo";
@@ -167,12 +168,18 @@ const Welcome = () => {
                 <T style={{ color: colors.muted }}>or</T>
                 <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
               </Row>
-              {providerButton("Continue with Google", "logo-google", () => {
-                setError("");
-                setGEmail("");
-                setGPass("");
-                setStep("g-email");
-              })}
+              {GOOGLE_READY ? (
+                <GoogleSignIn onAccount={chooseAccount} onError={setError}>
+                  {(press) => providerButton("Continue with Google", "logo-google", () => { setError(""); press(); })}
+                </GoogleSignIn>
+              ) : (
+                providerButton("Continue with Google", "logo-google", () => {
+                  setError("");
+                  setGEmail("");
+                  setGPass("");
+                  setStep("g-email");
+                })
+              )}
               {providerButton("Continue with Apple", "logo-apple", async () => {
                 setError("");
                 // on an iPhone, use the Apple ID that is signed in on the device

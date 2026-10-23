@@ -22,3 +22,17 @@ Splash, phone/OTP sign-in, Home (Uber / Parcel / Outstation), Services, Activity
 ## Layout
 - `app/` routes, `components/` shared UI and SVG map, `store/` Zustand stores, `lib/mock.ts` places, fares and sample data
 - `legacy/` the original Ryde code (Clerk/Stripe/Supabase) kept for reference; excluded from TypeScript
+
+## Real sign-in (Google and Apple)
+
+Both are built in. Until they are set up, the app falls back to simulated sign-in pages so demos keep working.
+
+**Apple (iPhone only).** "Continue with Apple" opens Apple's own sheet and uses the Apple ID on the phone. It works in a development, TestFlight or App Store build. Apple sign-in on Android or the web needs a paid Apple Developer account (a Services ID), so those use the simulated page.
+
+**Google (Android, iPhone and web).** Create OAuth client IDs in the Google Cloud console (free):
+1. Create a project, then APIs & Services > OAuth consent screen (External; add yourself as a test user).
+2. Credentials > Create credentials > OAuth client ID:
+   - **Web application**: gives `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
+   - **Android**: package name `com.routiq.app` and the SHA-1 fingerprint of the signing key (`keytool -printcert -jarfile routiq.apk`), gives `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`.
+   - **iOS**: bundle ID `com.routiq.app`, gives `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`.
+3. Put the IDs in `.env` (copy `.env.example`) for local runs, and add them to the build as EAS environment variables (`eas env:create`) so the APK or IPA includes them. Rebuild the app after changing them.
