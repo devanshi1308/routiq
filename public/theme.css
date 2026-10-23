@@ -1,0 +1,115 @@
+/*
+ * Routiq theme system
+ * ------------------------------------------------------------------------------------------------
+ * HOW IT SWITCHES (no JavaScript needed on first load)
+ *   - No class on <html>  : follows the visitor's system setting (prefers-color-scheme).
+ *   - <html class="theme-light"> or "theme-dark" : forces that theme. A tiny optional script can set the class.
+ *   - <html class="theme-yourname"> : any extra theme (see "ADDING A THEME" at the bottom).
+ *
+ * HOW TOKENS ARE NAMED  (--color-<role>[-<variant>])
+ *   Components use ONLY semantic tokens such as --color-surface or --color-text-muted, never raw hex values.
+ *   Each token is written once as light-dark(<light value>, <dark value>), so light and dark live side by side.
+ *
+ * CONTRAST
+ *   Every text/background pair below is checked against WCAG AA (4.5:1 text, 3:1 large text and UI parts) in
+ *   every theme by `npm run check:contrast`. Change a colour, run the check.
+ */
+
+/* ---- 1. Base: follow the system, and tell the browser which schemes the page supports ---- */
+:root {
+  color-scheme: light dark;
+
+  /* surfaces (backgrounds) */
+  --color-bg:             light-dark(#ffffff, #121212);  /* page */
+  --color-surface:        light-dark(#f4f4f4, #1e1e1e);  /* cards, inputs, chips */
+  --color-surface-raised: light-dark(#ffffff, #2a2a2a);  /* sheets, menus, anything floating */
+
+  /* text */
+  --color-text:           light-dark(#0b0b0b, #ffffff);
+  --color-text-muted:     light-dark(#595959, #b0b0b0);
+  --color-link:           light-dark(#1a56c9, #8ab4ff);
+
+  /* lines and focus (UI parts need 3:1 against the surface they sit on) */
+  --color-border:         light-dark(#d4d4d4, #3a3a3a);  /* decorative dividers only */
+  --color-border-strong:  light-dark(#767676, #8e8e8e);  /* input outlines, checkbox edges */
+  --color-focus-ring:     light-dark(#1a56c9, #8ab4ff);
+
+  /* strong "ink" fill (primary buttons) and the text that sits on it */
+  --color-accent:         light-dark(#000000, #ffffff);
+  --color-on-accent:      light-dark(#ffffff, #000000);
+
+  /* status: *-text is for text and icons on bg/surface, the plain colour is a fill (bars, dots) */
+  --color-success:        light-dark(#1b8a4c, #3fcf7a);
+  --color-success-text:   light-dark(#0b6b3a, #5fd88f);
+  --color-danger-text:    light-dark(#b3261e, #ff8f86);
+  --color-warning-text:   light-dark(#8a4b00, #ffb454);
+  --color-info:           light-dark(#276ef1, #5b9bff);
+
+  /* non-colour tokens that also change per theme (light-dark() only works for colours) */
+  --logo-mark: url("/logo-black.png");
+
+  /* shared, theme-independent design tokens */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 26px;
+  --shadow-raised: 0 4px 16px rgb(0 0 0 / 0.18);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
+}
+
+/* ---- 2. Forced themes: only the colour scheme changes, the tokens above resolve themselves ---- */
+:root.theme-light { color-scheme: light; }
+:root.theme-dark  { color-scheme: dark; }
+
+/* the logo is an image, so it needs an explicit rule for dark (system and forced) */
+@media (prefers-color-scheme: dark) { :root:not(.theme-light) { --logo-mark: url("/logo-white.png"); } }
+:root.theme-dark  { --logo-mark: url("/logo-white.png"); }
+:root.theme-light { --logo-mark: url("/logo-black.png"); }
+
+/* ---- 3. Older browsers without light-dark(): fall back to the light palette, forced dark still works below ---- */
+@supports not (color: light-dark(#000, #fff)) {
+  :root {
+    --color-bg: #ffffff; --color-surface: #f4f4f4; --color-surface-raised: #ffffff;
+    --color-text: #0b0b0b; --color-text-muted: #595959; --color-link: #1a56c9;
+    --color-border: #d4d4d4; --color-border-strong: #767676; --color-focus-ring: #1a56c9;
+    --color-accent: #000000; --color-on-accent: #ffffff;
+    --color-success: #1b8a4c; --color-success-text: #0b6b3a; --color-danger-text: #b3261e; --color-warning-text: #8a4b00; --color-info: #276ef1;
+  }
+  :root.theme-dark {
+    --color-bg: #121212; --color-surface: #1e1e1e; --color-surface-raised: #2a2a2a;
+    --color-text: #ffffff; --color-text-muted: #b0b0b0; --color-link: #8ab4ff;
+    --color-border: #3a3a3a; --color-border-strong: #8e8e8e; --color-focus-ring: #8ab4ff;
+    --color-accent: #ffffff; --color-on-accent: #000000;
+    --color-success: #3fcf7a; --color-success-text: #5fd88f; --color-danger-text: #ff8f86; --color-warning-text: #ffb454; --color-info: #5b9bff;
+  }
+}
+
+/* ---- 3b. Extra theme (example of the pattern): sepia, a warm low-glare reading theme ---- */
+:root.theme-sepia {
+  color-scheme: light;
+  --color-bg: #f4ecd8;  --color-surface: #eadfc4;  --color-surface-raised: #fbf6e8;
+  --color-text: #2b2118;  --color-text-muted: #5a4a38;  --color-link: #8a3b00;
+  --color-border: #d3c4a2;  --color-border-strong: #7a6a55;  --color-focus-ring: #8a3b00;
+  --color-accent: #2b2118;  --color-on-accent: #f4ecd8;
+  --color-success: #3f7d3a;  --color-success-text: #2c5e28;  --color-danger-text: #9c2a1f;  --color-warning-text: #7a4300;  --color-info: #8a3b00;
+}
+
+/* ---- 4. Base element styles that use the tokens (so a bare page is already themed) ---- */
+html { background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); }
+body { margin: 0; background: var(--color-bg); color: var(--color-text); }
+a { color: var(--color-link); }
+:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 2px; }
+::selection { background: var(--color-info); color: var(--color-bg); }
+
+/*
+ * ADDING A THEME (no refactor needed)
+ *   1. Add one block below that sets ONLY the tokens that differ, every token has a name above:
+ *
+ *        :root.theme-sepia {
+ *          color-scheme: light;
+ *          --color-bg: #f4ecd8;  --color-surface: #eadfc4;  --color-surface-raised: #fbf6e8;
+ *          --color-text: #2b2118;  --color-text-muted: #5a4a38;  ... (the rest as needed)
+ *        }
+ *
+ *   2. Add the theme name to THEMES in scripts/check-contrast.js and run `npm run check:contrast`.
+ *   3. Switch to it with <html class="theme-sepia">. Nothing else in the page or components changes.
+ */

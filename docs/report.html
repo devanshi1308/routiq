@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Routiq – SRS, UI Golden Rules, Viva</title>
+<style>
+ body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f6f6;color:#111;line-height:1.5}
+ header{background:#000;color:#fff;padding:20px 32px} header h1{margin:0;font-size:22px}
+ main{max-width:960px;margin:0 auto;padding:24px}
+ section{background:#fff;border-radius:16px;padding:24px;margin-bottom:24px}
+ h2{margin-top:0} h3{margin-bottom:4px} table{border-collapse:collapse;width:100%;font-size:14px}
+ td,th{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top} th{background:#f0f0f0}
+ code{background:#eee;padding:1px 5px;border-radius:4px}
+ @media print{header{background:#fff;color:#000}section{break-inside:avoid}}
+</style></head><body>
+<header><h1>Routiq — Software Engineering Project</h1><div>1. UI using UI Golden Rules · 2. SRS Report · 3. Viva prep</div></header>
+<main>
+
+<section id="golden"><h2>1. UI Golden Rules (Shneiderman's 8) applied to the app</h2>
+<table><tr><th>#</th><th>Golden rule</th><th>Where it appears in the app</th></tr>
+<tr><td>1</td><td>Strive for consistency</td><td>Same black primary button, grey cards, Jakarta font, and the same back/close header on every screen. Vehicle illustrations look the same on Home, Services, ride list and history.</td></tr>
+<tr><td>2</td><td>Enable frequent users to use shortcuts</td><td>Recent places on Home start a booking in one tap. Auto is pre-selected. "Later" lets power users schedule.</td></tr>
+<tr><td>3</td><td>Offer informative feedback</td><td>Trip screen shows each state (finding driver, on the way, arrived, on trip) with a progress bar and moving vehicle. The selected ride gets a black outline; the ETA shows on the map.</td></tr>
+<tr><td>4</td><td>Design dialogs to yield closure</td><td>A booking ends with a "You've arrived" screen with fare, rating and Done. Cancelled trips are saved in Activity.</td></tr>
+<tr><td>5</td><td>Offer simple error handling</td><td>Continue/Verify buttons stay disabled until the phone number (10 digits) and OTP (4 digits) are valid. "No places found" message in search. Cancel is always available before the trip starts.</td></tr>
+<tr><td>6</td><td>Permit easy reversal of actions</td><td>Back arrow on every booking step, Cancel ride button, "Change number" on the OTP step, payment method can be switched before booking.</td></tr>
+<tr><td>7</td><td>Support internal locus of control</td><td>The rider chooses destination, ride type, payment method and when to cancel. Nothing is booked until "Choose Auto" is pressed.</td></tr>
+<tr><td>8</td><td>Reduce short-term memory load</td><td>Skeleton loaders show layout while loading; the PIN stays on the trip screen; recent places and the driver's plate/vehicle stay visible; the fare is shown next to each ride type.</td></tr></table></section>
+
+<section id="srs"><h2>2. Software Requirements Specification (SRS)</h2>
+<p><em>Structure follows IEEE 830. Map each section to your Experiment 1–9 titles (table at the end).</em></p>
+<h3>1. Introduction</h3>
+<p><b>1.1 Purpose.</b> Defines requirements for a mobile ride-hailing app (Routiq) for riders in India.<br>
+<b>1.2 Scope.</b> Riders sign in, choose a destination, compare ride types (Auto, Go AC, Bike, Priority, Premier, XL), book, track the trip, pay, rate, and view history, wallet, safety, inbox and help. Driver and admin apps are out of scope (driver actions are simulated).<br>
+<b>1.3 Definitions.</b> OTP – one-time password; PIN – 4-digit trip verification code; ETA – estimated time of arrival; SRS – Software Requirements Specification.<br>
+<b>1.4 References.</b> IEEE 830-1998; Uber India app (UI reference); Shneiderman's 8 Golden Rules.</p>
+<h3>2. Overall description</h3>
+<p><b>Product perspective.</b> Standalone cross-platform app (React Native + Expo) with a mock backend; designed to later connect to a real API, maps and a payment gateway.<br>
+<b>User classes.</b> Rider (primary), Driver (simulated), Admin (future).<br>
+<b>Operating environment.</b> iOS 15+, Android 10+, modern browsers.<br>
+<b>Constraints.</b> Internet required for a production version; location permission; INR currency.<br>
+<b>Assumptions.</b> Drivers are always available within the city; fares are estimates.</p>
+<h3>3. Specific requirements</h3>
+<h4>3.1 Functional requirements</h4>
+<table><tr><th>ID</th><th>Requirement</th></tr>
+<tr><td>FR-1</td><td>The system shall let a user sign in or sign up with a phone number and 4-digit OTP, an email, a Google account or an Apple ID, as a rider or a driver.</td></tr>
+<tr><td>FR-2</td><td>The system shall show recent places and service tiles (Auto, Trip, Bike, Rentals and others) on the Home screen; choosing a tile pre-selects that ride type.</td></tr>
+<tr><td>FR-3</td><td>The system shall let the user search places and select a destination; recent places shall be shown.</td></tr>
+<tr><td>FR-4</td><td>The system shall display each ride type with seats, ETA, arrival time and a fare computed from distance and time.</td></tr>
+<tr><td>FR-5</td><td>The user shall choose a payment method (Cash, UPI, Uber Cash).</td></tr>
+<tr><td>FR-6</td><td>The system shall assign a driver and show name, rating, vehicle, plate and a trip PIN.</td></tr>
+<tr><td>FR-7</td><td>The system shall show trip progress on the map and status text.</td></tr>
+<tr><td>FR-8</td><td>The user shall be able to cancel before the trip starts.</td></tr>
+<tr><td>FR-9</td><td>On completion the system shall show the fare and let the user rate the driver (1–5).</td></tr>
+<tr><td>FR-10</td><td>The system shall store completed and cancelled rides in Activity.</td></tr>
+<tr><td>FR-11</td><td>The system shall provide Wallet, Safety hub, Inbox, Help and Account screens.</td></tr></table>
+<h4>3.2 Non-functional requirements</h4>
+<table><tr><th>Type</th><th>Requirement</th></tr>
+<tr><td>Performance</td><td>Screens respond within 1 s; the fare list renders within 1 s of destination selection.</td></tr>
+<tr><td>Usability</td><td>Follows the 8 Golden Rules; a first-time user can book a ride in under 1 minute.</td></tr>
+<tr><td>Security</td><td>Phone/OTP authentication, trip PIN verification, no card data stored on the device.</td></tr>
+<tr><td>Reliability</td><td>Trip state is not lost on screen change; cancelled rides are recorded.</td></tr>
+<tr><td>Portability</td><td>Single codebase for iOS, Android and web.</td></tr>
+<tr><td>Maintainability</td><td>Modular screens, Zustand stores, mock data isolated in <code>lib/mock.ts</code>.</td></tr></table>
+<h4>3.3 External interfaces</h4>
+<p>UI: touch screen, portrait. Hardware: GPS (future). Software: Maps API, SMS OTP provider, payment gateway (future). Communication: HTTPS.</p>
+<h4>3.4 Use cases</h4>
+<table><tr><th>Use case</th><th>Actor</th><th>Main flow</th></tr>
+<tr><td>UC-1 Sign in</td><td>Rider</td><td>Enter phone → OTP → Home</td></tr>
+<tr><td>UC-2 Book ride</td><td>Rider</td><td>Where to → choose ride → payment method → confirm → driver found</td></tr>
+<tr><td>UC-3 Complete trip</td><td>Rider, Driver</td><td>PIN → trip → arrive → pay → rate</td></tr>
+<tr><td>UC-4 Cancel ride</td><td>Rider</td><td>Cancel before start → saved as Cancelled</td></tr>
+<tr><td>UC-5 View history / help</td><td>Rider</td><td>Activity or Help → select ride</td></tr></table>
+<h4>3.5 Models</h4><p>See <a href="diagrams.html">diagrams.html</a>: activity diagram, class diagram, state chart.</p>
+<h4>Mapping to your experiments</h4>
+<p>I don't know your lab manual's titles for experiments 1–9, so this is a typical mapping. Adjust it to yours.</p>
+<table><tr><th>Typical experiment</th><th>Where it is covered</th></tr>
+<tr><td>Problem statement / process model</td><td>Section 1 Introduction + 2 Overall description</td></tr>
+<tr><td>Requirement gathering / SRS</td><td>Section 3.1–3.3</td></tr>
+<tr><td>Use case diagram</td><td>Section 3.4 table (draw actors Rider, Driver)</td></tr>
+<tr><td>Activity, Class, State chart diagrams</td><td>diagrams.html</td></tr>
+<tr><td>UI design / golden rules</td><td>Section 1 above + the running app</td></tr>
+<tr><td>Testing, estimation (COCOMO), risk</td><td>Add using your lab manual formats</td></tr></table>
+</section>
+
+<section id="viva"><h2>3. Viva prep</h2>
+<ol>
+<li><b>Which SDLC model did you use?</b> Iterative/incremental: screens were built, previewed and improved in cycles.</li>
+<li><b>Functional vs non-functional requirement?</b> What the system does (book a ride) vs how well (responds in 1 s).</li>
+<li><b>Why an activity diagram?</b> It shows the workflow and decisions (driver accepts? rider cancels?).</li>
+<li><b>Why a state chart?</b> A trip has a lifecycle: searching → assigned → arrived → in progress → completed/cancelled.</li>
+<li><b>Class diagram relations?</b> User 1–* Trip, Trip *–1 RideType, Trip *–0..1 Driver, Driver 1–1 Vehicle.</li>
+<li><b>Name the 8 golden rules.</b> Consistency, shortcuts, feedback, closure, error handling, easy reversal, locus of control, short-term memory.</li>
+<li><b>How is fare computed?</b> base + perKm × distance + perMin × time (see <code>fareFor</code> in <code>lib/mock.ts</code>).</li>
+<li><b>What is mocked?</b> Auth, drivers, map and payments. A real API can replace <code>lib/mock.ts</code> and the stores.</li>
+<li><b>Tech stack?</b> React Native, Expo Router, Zustand, react-native-svg.</li>
+</ol></section>
+</main></body></html>

@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Routiq – UML Diagrams</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f6f6;color:#000}
+  header{background:#000;color:#fff;padding:20px 32px}
+  header h1{margin:0;font-size:22px} header p{margin:4px 0 0;color:#bbb;font-size:14px}
+  main{max-width:1200px;margin:0 auto;padding:24px}
+  section{background:#fff;border-radius:16px;padding:24px;margin-bottom:28px;box-shadow:0 1px 4px #0001}
+  h2{margin:0 0 4px} .sub{color:#666;margin:0 0 16px;font-size:14px}
+  .mermaid{overflow:auto;text-align:center}
+  .bar{display:flex;gap:8px;margin:0 0 12px}.bar button{border:0;background:#000;color:#fff;border-radius:8px;padding:8px 14px;font:600 13px system-ui;cursor:pointer}.bar button.alt{background:#eee;color:#000}
+  @media print{.bar,header p{display:none}section{break-inside:avoid;box-shadow:none}}
+</style></head><body>
+<header><h1>Routiq — UML Diagrams</h1><p>Activity diagram · Class diagram · State chart diagram (matches the code in /app, /store and /lib)</p></header>
+<main>
+
+<section><h2>1. Activity Diagram — Sign in, route, payment and booking</h2>
+<p class="sub">End-to-end rider flow from sign-in to rating, with the decisions the app makes (driver accepts, rider cancels).</p>
+<pre class="mermaid">
+flowchart TD
+  S(( )) --> A[Open app / splash]
+  A --> OB{First launch on this device?}
+  OB -- Yes --> OB2[Onboarding: three slides, Skip or Next, then Get started]
+  OB -- No --> B
+  OB2 --> B{Signed in?}
+  B -- No --> RS{Toggle: Rider or Driver}
+  RS -- Rider --> C[Choose: mobile number with country code, email, Google account or Apple ID]
+  RS -- Driver --> C
+  C --> D[Receive a 4-digit code that must match, resend after 15 s]
+  D --> D2{Existing account?}
+  C --> GA[Google: email, then password. Apple: Apple ID and password, then Share or Hide My Email]
+  GA --> D2
+  D2 -- No --> D3[Sign up: name and email, drivers also add vehicle and plate]
+  D2 -- Yes --> RT
+  D3 --> AL[First sign-in only: Allow your location screen]
+  AL --> RT{Role}
+  RT -- Driver --> DR[Driver screen: go online, accept requests as yourself]
+  RT -- Rider --> E[Home: recent places and service tiles]
+  B -- Yes --> E
+  E --> F[Tap 'Where to?', a recent place, or a service tile such as Bike]
+  F --> F2[A tile pre-selects its ride, e.g. Bike is listed first]
+  F2 --> PP[Rank popular places: H3 ring search around the rider, trips per month, own trips boost, distance penalty]
+  PP --> G[Plan your ride: Home, Work and saved chips, recent, popular and nearby places, or search]
+  G --> H[Pick destination]
+  H --> R1[Fetch routes: LRU cache and rate limiter first, then OSRM, else A* on place graph]
+  R1 --> R2[Default = shortest route]
+  R2 --> R3{Rider changes route?}
+  R3 -- Yes --> R4[Pick Fastest / Alternative, fare updates with traffic]
+  R3 -- No --> I
+  R4 --> I[Choose ride: Auto, Go AC, Bike, Priority, Premier, XL]
+  I --> J{Change payment?}
+  J -- Yes --> P1[Open Pay with screen]
+  P1 --> P2{Personal or Business?}
+  P2 -- Business --> P3[Set up company and work email, switch on Use for my rides]
+  P2 -- Personal --> P4[Toggle Uber balance, pick Cash or UPI, add voucher]
+  P3 --> K
+  P4 --> K
+  J -- No --> K[Tap 'Choose Auto']
+  K --> CP[Confirm pickup spot: map pin with address, Confirm pickup]
+  CP --> FR[Backend only: log GPS jumps, two-device sign-ins and many cancellations, rider is never blocked]
+  FR --> H1[Index rider into an H3 cell, search k-rings around it for vehicles - hexagons stay internal, not drawn]
+  H1 --> SG[Backend: surge multiplier from demand and supply in the rider's H3 hexagon plus 6 neighbours, capped at 2x, applied silently to fares]
+  SG --> FC[Backend: forecast demand 2 min ahead, nothing shown to the rider]
+  FC --> BD[Badge Cheapest and Fastest options]
+  BD --> PL[Routiq Pool: find look-alike trips with H3 start and end cells and similar time]
+  PL --> QG[Keep only drivers with rating 4.6+ and acceptance 80%+]
+  QG --> H2[Rank vehicles by distance, split into batches of 3]
+  H2 --> L[Status = searching, send batch N]
+  L --> SR[Rider sees 'N of M drivers didn't accept your ride', no driver names]
+  SR --> SX{Rider adds extra fare or another ride?}
+  SX -- Yes --> SY[Fare goes up by 10-40 rupees or the search restarts with the new ride type]
+  SX -- No --> TR
+  SY --> TR
+  L --> TR[Driver app: Trip Radar shows the request with fare, rating, pickup and trip distance]
+  TR --> M{Anyone in batch accepts?}
+  M -- No --> M2{More batches?}
+  M2 -- Yes --> L
+  M2 -- No / rider cancels --> X[Status = cancelled, save as Cancelled ride]
+  M -- Yes, driver taps Accept --> N[Show driver, vehicle, plate and PIN]
+  N --> NP[Rider sees Pick-up in N min, PIN banner, driver card, Message, ride details]
+  NP --> NC{Rider cancels?}
+  NC -- Yes --> NR[Pick a reason, then Cancel ride or Find another driver for no fee]
+  NR -- Find another driver --> L
+  NR -- Yes, cancel --> X
+  NC -- No --> N1[Driver sees turn-by-turn card and can open Google Maps to the pickup]
+  N1 --> N2[Live ETA countdown, driver vehicle moves to pickup]
+  N2 --> N3{Rider messages driver?}
+  N3 -- Yes --> N4[Chat: rider and driver exchange messages]
+  N3 -- No --> O
+  N4 --> O
+  N --> O{Rider cancels before pickup?}
+  O -- Yes --> X
+  O -- No --> P[Driver arrives, rider shares PIN]
+  P --> P2{Correct PIN entered by driver?}
+  P2 -- No --> P
+  P2 -- Yes --> PS[Trip starts, Google Maps opens with directions to the drop-off]
+  PS --> Q[Trip in progress: rider sees drop-off time, ride details, share, safety, message, support and tip options]
+  Q --> RR[Arrive at destination]
+  RR --> T[Show fare, collect payment]
+  T --> BR{Business profile on?}
+  BR -- Yes --> BR2[Email receipt to work address, add to travel report]
+  BR -- No --> U
+  BR2 --> U[Rate driver 1-5 stars]
+  U --> V[Save to Activity history, becomes a recent place]
+  V --> EV[Queue app events, flush a batch every 5 s to backend]
+  X --> EV
+  EV --> W(((End)))
+</pre></section>
+
+<section><h2>2. Class Diagram</h2>
+<p class="sub">Final domain model. Zustand stores (AuthStore, TripStore, HistoryStore) hold these objects at runtime.</p>
+<pre class="mermaid">
+classDiagram
+  direction LR
+  class User {
+    +String id
+    +String name
+    +String phone
+    +String email
+    +float rating
+    +Role role
+    +AuthMethod method
+    +signUp()
+    +signIn()
+    +signOut()
+  }
+  class Place {
+    +String id
+    +String name
+    +String address
+    +double latitude
+    +double longitude
+  }
+  class Route {
+    +String name
+    +float km
+    +int minutes
+    +TrafficLevel traffic
+    +float priceFactor
+    +List coords
+  }
+  class RideType {
+    +String id
+    +String name
+    +int seats
+    +float base
+    +float perKm
+    +float perMin
+    +int etaMin
+    +boolean ac
+  }
+  class Trip {
+    +String id
+    +TripStatus status
+    +float fare
+    +float boost
+    +float tip
+    +String pin
+    +DateTime requestedAt
+    +requestRide()
+    +assignDriver()
+    +start()
+    +complete()
+    +cancel()
+  }
+  class Driver {
+    +int id
+    +String name
+    +float rating
+    +int totalTrips
+    +int acceptanceRate
+    +accept(Trip)
+    +decline(Trip)
+    +confirmArrival()
+    +verifyPin(String)
+    +endTrip()
+  }
+  class DriverProfile {
+    +String vehicleType
+    +String plate
+    +boolean online
+    +goOnline()
+  }
+  class AuthMethod {
+    &lt;&lt;enumeration&gt;&gt;
+    Phone
+    Email
+    Google
+    Apple
+  }
+  class Role {
+    &lt;&lt;enumeration&gt;&gt;
+    Rider
+    Driver
+  }
+  class Vehicle {
+    +String plate
+    +String model
+    +int seats
+  }
+  class Payment {
+    +PaymentMethod method
+    +PaymentProfile profile
+    +float amount
+    +String status
+    +charge()
+  }
+  class Wallet {
+    +float uberCash
+    +boolean useBalance
+    +addPaymentMethod()
+    +addGiftCard()
+  }
+  class Voucher {
+    +String code
+    +float discountPercent
+    +apply(Trip)
+    +remove()
+  }
+  class H3Dispatch {
+    +String originCell
+    +int k
+    +findNearby(RideType)
+    +toBatches()
+  }
+  class DispatchBatch {
+    +int number
+    +int size
+    +List drivers
+    +send()
+    +timeout()
+  }
+  class SurgePricing {
+    +String h3Cell
+    +int demand
+    +int supply
+    +float multiplier
+    +compute()
+  }
+  class AppEvent {
+    +String name
+    +Map payload
+    +Metadata meta
+    +String requestId
+  }
+  class EventBatch {
+    +int number
+    +List events
+    +send()
+  }
+  class IntegrityFlag {
+    +String kind
+    +String detail
+    +DateTime time
+  }
+  class ChatMessage {
+    +String sender
+    +String text
+    +DateTime time
+    +boolean read
+  }
+  class PoolMatch {
+    +List lookAlikeTrips
+    +int maxStartRing
+    +int maxEndRing
+    +float discount
+    +match()
+  }
+  class DemandForecast {
+    +float alpha
+    +forecast(cell)
+    +projectedSurge()
+  }
+  class CancellationScore {
+    +List timestamps
+    +float score
+    +int limit
+    +record()
+  }
+  class RouteCache {
+    +int max
+    +int ttlMs
+    +get(key)
+    +set(key)
+  }
+  class TokenBucket {
+    +int capacity
+    +float refillPerSec
+    +take()
+  }
+  class AStarRouter {
+    +buildGraph(places)
+    +search(start, goal)
+    +int expandedNodes
+  }
+  class RealtimeFeed {
+    +boolean connected
+    +List vehicles
+    +connect()
+  }
+  class BusinessProfile {
+    +String company
+    +String workEmail
+    +boolean active
+    +emailReceipt(Trip)
+    +travelReport()
+  }
+  class NavigationStep {
+    +String instruction
+    +int meters
+  }
+  class TripEngine {
+    +startEtaCountdown()
+    +moveVehicle()
+    +autoPlay()
+    +recordCompletion()
+  }
+  class PopularPlace {
+    +String name
+    +int tripsPerMonth
+    +String h3Cell
+    +float score(origin, myTrips)
+  }
+  class SavedPlace {
+    +String label
+    +Place place
+  }
+  class CancelReason {
+    &lt;&lt;enumeration&gt;&gt;
+    DriverArrivedEarly
+    CouldNotFindDriver
+    WaitTooLong
+    DriverNotGettingCloser
+    DriverAskedToCancel
+    Other
+  }
+  class Country {
+    +String name
+    +String dialCode
+    +int minDigits
+    +int maxDigits
+  }
+  class OneTimeCode {
+    +String code
+    +int resendSeconds
+    +verify(input)
+  }
+  class RideNotification {
+    +String title
+    +String body
+    +String kind
+    +DateTime time
+  }
+  class SafetyProfile {
+    +String pin
+    +boolean audioRecording
+    +List emergencyContacts
+    +shareTripLocation()
+  }
+  class InboxMessage {
+    +String title
+    +String body
+    +String cta
+    +boolean unread
+  }
+  class Rating {
+    +int stars
+    +String comment
+  }
+  class TripStatus {
+    &lt;&lt;enumeration&gt;&gt;
+    idle
+    searching
+    driver_assigned
+    driver_arrived
+    in_progress
+    completed
+    cancelled
+  }
+  class PaymentMethod {
+    &lt;&lt;enumeration&gt;&gt;
+    Cash
+    UPI
+    UberCash
+  }
+  class PaymentProfile {
+    &lt;&lt;enumeration&gt;&gt;
+    Personal
+    Business
+  }
+  class TrafficLevel {
+    &lt;&lt;enumeration&gt;&gt;
+    Light
+    Moderate
+    Heavy
+  }
+  User "1" --> "1" Wallet : owns
+  User "1" --> "1" SafetyProfile : configures
+  User "1" --> "*" Trip : requests
+  User "1" --> "*" InboxMessage : receives
+  Wallet "1" --> "*" Voucher : holds
+  Trip "*" --> "1" RideType : of type
+  Trip "*" --> "1" Place : pickup
+  Trip "*" --> "1" Place : destination
+  Trip "1" --> "1" Route : chosen route
+  Trip "*" --> "0..1" Driver : served by
+  Trip "1" --> "1" Payment : paid via
+  Trip "*" --> "0..1" Voucher : discounted by
+  Trip "1" --> "0..1" Rating : rated with
+  Trip "1" --> "1" H3Dispatch : dispatched by
+  H3Dispatch "1" --> "*" Driver : candidates
+  H3Dispatch "1" --> "*" DispatchBatch : splits into
+  DispatchBatch "1" --> "*" RideNotification : creates
+  User "1" --> "*" RideNotification : sees
+  H3Dispatch "1" --> "1" SurgePricing : zone price
+  Trip "1" --> "1" SurgePricing : fare multiplier
+  Trip "1" --> "1" DemandForecast : warned by
+  User "1" --> "1" CancellationScore : scored by
+  Route "*" --> "1" RouteCache : cached in
+  RouteCache ..> TokenBucket : guarded by
+  Route ..> AStarRouter : offline fallback
+  H3Dispatch "1" --> "1" RealtimeFeed : live vehicles
+  Trip "*" --> "0..1" PoolMatch : shared via
+  Trip "1" --> "*" ChatMessage : chat thread
+  Driver "1" --> "*" ChatMessage : sends
+  User "1" --> "*" ChatMessage : sends
+  User "0..1" --> "1" BusinessProfile : may have
+  Trip "*" --> "0..1" BusinessProfile : charged to
+  Route "1" --> "*" NavigationStep : turn by turn
+  TripEngine ..> Trip : drives
+  User "1" --> "*" IntegrityFlag : logged for backend review
+  User "1" --> "*" AppEvent : generates
+  EventBatch "1" o-- "*" AppEvent
+  Trip "*" --> "1" Place : destination
+  Place "1" --> "0..1" PopularPlace : ranked as
+  User ..> PopularPlace : sees recommendations
+  User "1" --> "0..2" SavedPlace : Home and Work
+  Trip ..> CancelReason
+  Trip ..> TripStatus
+  Route ..> TrafficLevel
+  Payment ..> PaymentMethod
+  Payment ..> PaymentProfile
+  Driver "1" --> "1" Vehicle : drives
+  User ..> Role
+  User ..> AuthMethod
+  User ..> Country : phone code
+  User ..> OneTimeCode : verifies with
+  User "0..1" --> "1" DriverProfile : driver account
+</pre></section>
+
+<section><h2>3. State Chart Diagram — Trip lifecycle (with route and payment selection)</h2>
+<p class="sub">The same states used by <code>TripStatus</code> in <code>store/index.ts</code> and driven by timers in <code>app/(root)/trip.tsx</code>.</p>
+<pre class="mermaid">
+stateDiagram-v2
+  [*] --> idle
+  idle --> routing : destination picked
+  routing --> idle : back
+  routing --> confirming_pickup : rider taps Choose ride
+  confirming_pickup --> dispatching : rider confirms pickup spot
+  confirming_pickup --> routing : back
+  dispatching --> searching : H3 ring search done, candidates batched
+  searching --> driver_assigned : driver taps Accept on driver screen
+  searching --> cancelled : rider cancels / no driver
+  driver_assigned --> driver_arrived : driver taps I have arrived
+  driver_assigned --> searching : rider taps Find another driver
+  driver_assigned --> cancelled : rider or driver cancels
+  driver_arrived --> in_progress : driver enters correct PIN and starts trip
+  driver_arrived --> cancelled : rider no-show
+  in_progress --> completed : driver taps End trip at destination
+  completed --> [*] : fare paid and rated
+  cancelled --> [*] : saved to Activity
+  state routing {
+    [*] --> shortest_default
+    shortest_default --> other_route : rider changes route
+    other_route --> shortest_default : rider picks shortest
+    shortest_default --> paywith : rider opens Pay with
+    other_route --> paywith : rider opens Pay with
+    paywith --> shortest_default : method selected
+  }
+  state searching {
+    [*] --> batch_1
+    batch_1 --> batch_2 : driver declines or times out
+    batch_2 --> batch_3 : driver declines or times out
+    batch_1 --> [*] : accepted
+    batch_2 --> [*] : accepted
+    batch_3 --> [*] : accepted
+  }
+  state driver_assigned {
+    [*] --> approaching
+    approaching --> approaching : tick, update ETA and vehicle position
+    approaching --> [*] : ETA reaches 0
+    --
+    [*] --> chat_idle
+    chat_idle --> chat_open : rider opens chat
+    chat_open --> chat_idle : rider goes back
+  }
+  state in_progress {
+    [*] --> moving
+    moving --> moving : update route progress
+    moving --> [*]
+  }
+</pre></section>
+
+<section><h2>4. System Architecture — data flow (inspired by Uber's big data platform)</h2>
+<p class="sub">Source: Uber Engineering blogs on the big data platform and the rider app. Latency labels are Uber's published targets; this clone implements only the client queue and batching.</p>
+<pre class="mermaid">
+flowchart LR
+  subgraph APP[Rider app - implemented]
+    UI[Screens] --> Q[Event queue with standard metadata]
+    Q -->|batch every 5 s| SEND[Batch sender]
+  end
+  SEND --> GW[API gateway]
+  GW --> VAL{Registered schema?}
+  VAL -- No --> DROP[Drop event]
+  VAL -- Yes --> K[(Kafka changelog topics, Avro)]
+  SVC[Backend services: trips, pricing, dispatch] --> K
+  SVC --> WS[WebSocket gateway, live vehicle positions every 1 s]
+  WS --> UI
+  UI --> CACHE[LRU cache and token bucket] --> GW
+  SCH[Schema service] -.-> VAL
+  K -->|mini-batch every 10-15 min| ING[Ingestion, Hudi upserts]
+  ING --> LAKE[(HDFS / Parquet data lake)]
+  LAKE --> ETL[Incremental Spark ETL, under 30 min]
+  ETL --> MOD[(Modeled tables)]
+  MOD --> PRESTO[Presto / Hive / Spark queries]
+  PRESTO --> DASH[Dashboards: funnels, heatmaps, surge, ML features]
+  DASH --> SG2[Pricing and matching models]
+  SG2 --> SVC
+</pre></section>
+
+</main>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: false, theme: "neutral", securityLevel: "loose", flowchart: { useMaxWidth: false, htmlLabels: false }, class: { htmlLabels: false }, state: { useMaxWidth: false } });
+  const names = ["activity-diagram", "class-diagram", "state-chart-diagram", "system-architecture"];
+  await mermaid.run({ querySelector: ".mermaid" });
+
+  const save = (blob, name) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
+  const svgText = (svg) => {
+    const c = svg.cloneNode(true);
+    const vb = svg.viewBox.baseVal;
+    const w = vb && vb.width ? vb.width : svg.getBoundingClientRect().width, h = vb && vb.height ? vb.height : svg.getBoundingClientRect().height;
+    c.setAttribute("xmlns", "http://www.w3.org/2000/svg"); c.setAttribute("width", w); c.setAttribute("height", h); c.style.maxWidth = "none";
+    return { text: new XMLSerializer().serializeToString(c), w, h };
+  };
+  document.querySelectorAll(".mermaid").forEach((box, i) => {
+    const svg = box.querySelector("svg"); if (!svg) return;
+    const bar = document.createElement("div"); bar.className = "bar";
+    const b1 = Object.assign(document.createElement("button"), { textContent: "Download SVG" });
+    const b2 = Object.assign(document.createElement("button"), { textContent: "Download PNG", className: "alt" });
+    b1.onclick = () => save(new Blob([svgText(svg).text], { type: "image/svg+xml" }), names[i] + ".svg");
+    b2.onclick = () => {
+      const { text, w, h } = svgText(svg), img = new Image(), scale = 2;
+      img.onload = () => { const cv = document.createElement("canvas"); cv.width = w * scale; cv.height = h * scale; const x = cv.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, cv.width, cv.height); x.drawImage(img, 0, 0, cv.width, cv.height); cv.toBlob((b) => save(b, names[i] + ".png")); };
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(text);
+    };
+    bar.append(b1, b2); box.parentElement.insertBefore(bar, box);
+  });
+  window.__diagramsReady = true;
+</script>
+</body></html>
