@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import DriverInfo from "@/components/DriverInfo";
 import LiveMap from "@/components/LiveMap";
 import { shortName } from "@/lib/privacy";
+import { coRiders, lookAlikeTrips } from "@/lib/pool";
 import { useFavStore, useSafetyStore } from "@/store/extras";
 import { Linking, Platform } from "react-native";
 import Vehicle, { VehicleKind } from "@/components/Vehicle";
@@ -32,6 +33,7 @@ const Trip = () => {
   const [details, setDetails] = useState(false);
   const [info, setInfo] = useState(false);
   const favItems = useFavStore((f) => f.items);
+  const together = useMemo(() => (rideType?.id === "pool" && destination ? coRiders(lookAlikeTrips(pickup, destination), pickup) : []), [rideType?.id, pickup, destination]);
   const trusted = useSafetyStore((x) => x.share);
   const safeOn = useSafetyStore((x) => x.safeArrival);
   const hourNow = new Date().getHours();
@@ -204,6 +206,28 @@ const Trip = () => {
 
       <ScrollView ref={sheet} style={{ flex: 1, marginTop: -20, backgroundColor: colors.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24 }} contentContainerStyle={{ padding: 20, paddingBottom: 36 }}>
         <T style={{ fontFamily: font.extra, fontSize: 24, textAlign: status === "driver_arrived" ? "center" : "left" }}>{title}</T>
+
+        {together.length > 0 && (status === "searching" || status === "driver_assigned" || status === "driver_arrived" || status === "in_progress") && (
+          <View style={{ backgroundColor: colors.card, borderRadius: 18, padding: 16, marginTop: 14 }}>
+            <Row style={{ gap: 8 }}>
+              <Ionicons name="people" size={20} />
+              <T style={{ fontFamily: font.bold, fontSize: 16 }}>Riding together</T>
+              <T style={{ marginLeft: "auto", color: colors.green, fontFamily: font.bold, fontSize: 13 }}>You save about 35%</T>
+            </Row>
+            {together.map((c) => (
+              <Row key={c.name} style={{ gap: 12, marginTop: 10 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.ink, alignItems: "center", justifyContent: "center" }}>
+                  <T style={{ color: colors.onInk, fontFamily: font.bold }}>{c.name[0]}</T>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <T style={{ fontFamily: font.semi }}>{c.name}</T>
+                  <T style={{ color: colors.muted, fontSize: 12 }}>Joins {c.walkMin} min from you · adds about {c.detourMin} min</T>
+                </View>
+              </Row>
+            ))}
+            <T style={{ color: colors.muted, fontSize: 12, marginTop: 10 }}>Co-riders only see your first name. If nobody joins, you still pay the lower carpool fare.</T>
+          </View>
+        )}
 
         {/* ---------- searching ("Ride requested"): finding drivers, add extra to get matched sooner ---------- */}
         {status === "searching" && (

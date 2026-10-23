@@ -21,6 +21,7 @@ const Services = () => {
           <Pressable
             key={svc.id}
             onPress={() => {
+              if (svc.id === "carpool") return router.push("/(root)/carpool" as any);
               useTripStore.getState().setPreferred(SERVICE_RIDE[svc.id] ?? null);
               router.push("/(root)/where-to");
             }}

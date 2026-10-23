@@ -1,7 +1,7 @@
 import { gridDistance, latLngToCell } from "@/lib/h3";
 
 import { H3_RES } from "@/lib/dispatch";
-import { Place } from "@/lib/mock";
+import { haversineKm, Place } from "@/lib/mock";
 
 // Uber Pool: Uber's data showed most trips have a "look-a-like" trip that starts near, ends near and happens
 // around the same time. We simulate other riders and match them using H3 cells for start and end.
@@ -33,3 +33,12 @@ export const lookAlikeTrips = (pickup: Place, dest: Place, count = 6) => {
     })
     .slice(0, count);
 };
+
+const FIRST = ["Asha", "Rohan", "Meera", "Imran", "Kavya", "Dev", "Nisha", "Arjun"];
+
+/** The people you would share the ride with: first names only, how far they are from you and the extra minutes for you. */
+export const coRiders = (pool: { from: Place }[], pickup: Place, max = 3) =>
+  pool.slice(0, max).map((t, i) => {
+    const km = haversineKm(pickup, t.from) / 1.35;
+    return { name: FIRST[(i * 3 + Math.round(pickup.latitude * 1e3)) % FIRST.length], walkMin: Math.max(1, Math.round((km / 5) * 60)), detourMin: 2 + i * 2 };
+  });

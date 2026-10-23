@@ -14,8 +14,8 @@ import { Place, recentFrom, SERVICE_RIDE, SERVICES } from "@/lib/mock";
 import { useAuthStore, useHistoryStore, useTripStore } from "@/store";
 import { useCommuteStore, useFavStore } from "@/store/extras";
 
-const BADGES: Record<string, string> = { trip: "25%", reserve: "20%" };
-const FOR_YOU = ["auto", "trip", "bike", "reserve"];
+const BADGES: Record<string, string> = { trip: "25%", reserve: "20%", carpool: "35%" };
+const FOR_YOU = ["auto", "trip", "bike", "carpool", "reserve"];
 
 const Home = () => {
   const name = useAuthStore((s) => s.name).split(" ")[0];
@@ -85,6 +85,7 @@ const Home = () => {
 
   // A tile such as Bike remembers its ride, so the ride screen opens with Bike selected and first in the list.
   const openService = (id: string) => {
+    if (id === "carpool") return router.push("/(root)/carpool" as any);
     setPreferred(SERVICE_RIDE[id] ?? null);
     useAnalytics.getState().setSource("search");
     router.push("/(root)/where-to");

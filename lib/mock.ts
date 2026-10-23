@@ -153,6 +153,7 @@ export const SERVICES = [
   { id: "trip", label: "Trip", emoji: "sleek", badge: "25%" },
   { id: "bike", label: "Bike", emoji: "bike" },
   { id: "reserve", label: "Reserve", emoji: "calendar", badge: "20%" },
+  { id: "carpool", label: "Carpool", emoji: "sedan2", badge: "35%" },
 ];
 
 export const INBOX = [
@@ -184,4 +185,4 @@ export const nearbyFrom = (origin: Place, exclude: Place[] = [], limit = 6) =>
     .slice(0, limit);
 
 /** Which ride a Home / Services tile opens. Tiles without an entry open the normal ride list. */
-export const SERVICE_RIDE: Record<string, string | undefined> = { auto: "auto", trip: "go-ac", bike: "bike" };
+export const SERVICE_RIDE: Record<string, string | undefined> = { auto: "auto", trip: "go-ac", bike: "bike", carpool: "pool" };
