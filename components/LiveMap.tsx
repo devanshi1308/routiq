@@ -15,6 +15,10 @@ type Props = {
   /** H3 cells to outline (lat/lon rings) */
   hexes?: [number, number][][];
   vehicles?: { latitude: number; longitude: number; kind?: "auto" | "car" | "bike" }[];
+  /** which vehicle to draw on the road (auto, cab or bike) */
+  vehicleKind?: "auto" | "car" | "bike";
+  /** driving-to-you / on-the-trip look: green route, rotating vehicle */
+  tripMode?: boolean;
   /** the matched driver's live position while they travel to the pickup */
   driverPos?: { latitude: number; longitude: number } | null;
 };
@@ -26,25 +30,33 @@ const html = (init: object) => `<!doctype html><html><head><meta name="viewport"
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>html,body,#m{height:100%;margin:0;background:#E5E7EB}.sq{width:14px;height:14px;background:#000;border:3px solid #fff;box-sizing:border-box}
 .car{width:18px;height:28px;background:#F7C416;border:2px solid #000;border-radius:5px;box-sizing:border-box}
-.v{width:10px;height:16px;background:#EAB308;border:1.5px solid #000;border-radius:3px;box-sizing:border-box}.eta{background:#000;color:#fff;border:0;font:700 12px system-ui;border-radius:0;padding:4px 8px}.eta:before{display:none}</style></head>
+.v{width:10px;height:16px;background:#EAB308;border:1.5px solid #000;border-radius:3px;box-sizing:border-box}.eta{background:#000;color:#fff;border:0;font:700 12px system-ui;border-radius:0;padding:4px 8px}.eta:before{display:none}.veh{filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));transition:transform .4s linear}</style></head>
 <body><div id="m"></div><script>
 var map=L.map('m',{zoomControl:false}).setView([${(init as any).lat},${(init as any).lon}],15);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
 var layers=[],lastKey='';
+/* top-down vehicle drawings, nose pointing up, turned to the direction of travel */
+var SPR={
+ car:'<svg viewBox="0 0 40 64" width="34" height="54"><rect x="7" y="3" width="26" height="58" rx="12" fill="#fff" stroke="#c9ccd1" stroke-width="1.5"/><path d="M11 19 Q20 12 29 19 L28 29 L12 29Z" fill="#23272f"/><rect x="11" y="37" width="18" height="14" rx="5" fill="#23272f"/><rect x="3" y="12" width="5" height="12" rx="2.5" fill="#23272f"/><rect x="32" y="12" width="5" height="12" rx="2.5" fill="#23272f"/><rect x="3" y="40" width="5" height="12" rx="2.5" fill="#23272f"/><rect x="32" y="40" width="5" height="12" rx="2.5" fill="#23272f"/></svg>',
+ auto:'<svg viewBox="0 0 40 64" width="32" height="50"><rect x="17" y="2" width="6" height="10" rx="3" fill="#23272f"/><path d="M13 12 Q20 8 27 12 L31 56 Q31 61 26 61 L14 61 Q9 61 9 56Z" fill="#2fa55b" stroke="#1f7a42" stroke-width="1.5"/><path d="M14 16 Q20 13 26 16 L25 25 L15 25Z" fill="#23272f"/><rect x="12" y="30" width="16" height="22" rx="4" fill="#23272f" opacity=".85"/><rect x="5" y="44" width="5" height="12" rx="2.5" fill="#23272f"/><rect x="30" y="44" width="5" height="12" rx="2.5" fill="#23272f"/></svg>',
+ bike:'<svg viewBox="0 0 24 64" width="20" height="54"><rect x="9" y="2" width="6" height="16" rx="3" fill="#23272f"/><rect x="2" y="14" width="20" height="4" rx="2" fill="#23272f"/><rect x="8" y="18" width="8" height="34" rx="4" fill="#e03a3a" stroke="#a82727" stroke-width="1.2"/><rect x="9" y="50" width="6" height="12" rx="3" fill="#23272f"/><circle cx="12" cy="30" r="4" fill="#23272f"/></svg>'
+};
+function bearing(a,b){var r=Math.PI/180,y=Math.sin((b[1]-a[1])*r)*Math.cos(b[0]*r),x=Math.cos(a[0]*r)*Math.sin(b[0]*r)-Math.sin(a[0]*r)*Math.cos(b[0]*r)*Math.cos((b[1]-a[1])*r);return (Math.atan2(y,x)/r+360)%360;}
+function vicon(kind,deg){var k=SPR[kind]?kind:'car';return L.divIcon({className:'',html:'<div class="veh" style="transform:rotate('+deg+'deg)">'+SPR[k]+'</div>',iconSize:[40,56],iconAnchor:[20,28]});}
 function apply(st){
   layers.forEach(function(l){map.removeLayer(l)});layers=[];
   var all=[[st.pickup.lat,st.pickup.lon]];
   (st.hexes||[]).forEach(function(h){layers.push(L.polygon(h,{color:'#276EF1',weight:1,fillColor:'#276EF1',fillOpacity:.07}).addTo(map));});
-  (st.veh||[]).forEach(function(v){layers.push(L.marker([v[0],v[1]],{icon:L.divIcon({className:'',html:'<div style="width:30px;height:30px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35);display:grid;place-items:center;font-size:18px">'+(v[2]==='bike'?'🏍️':v[2]==='car'?'🚕':'🛺')+'</div>',iconSize:[30,30],iconAnchor:[15,15]})}).addTo(map));});
+  (st.veh||[]).forEach(function(v,i){layers.push(L.marker([v[0],v[1]],{icon:vicon(v[2],(i*67+Math.round(v[0]*1e4))%360)}).addTo(map));});
   if(st.dest){all.push([st.dest.lat,st.dest.lon]);}
   (st.routes||[]).forEach(function(r,i){ if(i!==st.sel) layers.push(L.polyline(r,{color:'#8A9099',weight:6,opacity:.85}).addTo(map)); });
   var sel=(st.routes||[])[st.sel];
-  if(sel){layers.push(L.polyline(sel,{color:'#000',weight:6}).addTo(map));all=all.concat(sel);}
-  layers.push(L.circleMarker([st.pickup.lat,st.pickup.lon],{radius:8,color:'#fff',weight:3,fillColor:'#000',fillOpacity:1}).addTo(map));
+  if(sel){if(st.trip)layers.push(L.polyline(sel,{color:'#fff',weight:11,opacity:.95}).addTo(map));layers.push(L.polyline(sel,{color:st.trip?'#1FB86A':'#000',weight:st.trip?7:6,lineCap:'round'}).addTo(map));all=all.concat(sel);}
+  layers.push(L.circleMarker([st.pickup.lat,st.pickup.lon],{radius:8,color:'#fff',weight:3,fillColor:st.trip?'#00C2A8':'#000',fillOpacity:1}).addTo(map));
   if(st.dest) layers.push(L.marker([st.dest.lat,st.dest.lon],{icon:L.divIcon({className:'',html:'<div class="sq"></div>',iconSize:[14,14],iconAnchor:[7,7]})}).addTo(map));
   if(st.eta) layers.push(L.marker([st.pickup.lat,st.pickup.lon],{opacity:0}).bindTooltip(st.eta,{permanent:true,direction:'right',className:'eta',offset:[10,-14]}).addTo(map));
-  if(st.drv){layers.push(L.marker(st.drv,{icon:L.divIcon({className:'',html:'<div class="car"></div>',iconSize:[18,28],iconAnchor:[9,14]})}).addTo(map));all.push(st.drv);}
-  if(st.car) layers.push(L.marker(st.car,{icon:L.divIcon({className:'',html:'<div class="car"></div>',iconSize:[18,28],iconAnchor:[9,14]})}).addTo(map));
+  if(st.drv){layers.push(L.marker(st.drv,{icon:vicon(st.vk,bearing(st.drv,[st.pickup.lat,st.pickup.lon]))}).addTo(map));all.push(st.drv);}
+  if(st.car) layers.push(L.marker(st.car,{icon:vicon(st.vk,st.cb||0)}).addTo(map));
   var key=JSON.stringify([st.pickup,st.dest,st.sel,(st.routes||[]).length,(st.hexes||[]).length]);
   if(key!==lastKey){lastKey=key;map.fitBounds(L.latLngBounds(all),{padding:[40,40],maxZoom:16});}
 }
@@ -67,7 +79,18 @@ const along = (coords: [number, number][], progress: number): [number, number] |
   return coords[coords.length - 1];
 };
 
-const LiveMap = ({ pickup, destination, routes = [], routeIndex = 0, progress = null, height, etaLabel, hexes = [], vehicles = [], driverPos = null }: Props) => {
+/** direction of travel (degrees, 0 = north) at a point along the route */
+const bearingAlong = (coords: [number, number][], progress: number) => {
+  const a = along(coords, Math.max(0, progress - 0.01));
+  const b = along(coords, Math.min(1, progress + 0.01));
+  if (!a || !b) return 0;
+  const r = Math.PI / 180;
+  const y = Math.sin((b[1] - a[1]) * r) * Math.cos(b[0] * r);
+  const x = Math.cos(a[0] * r) * Math.sin(b[0] * r) - Math.sin(a[0] * r) * Math.cos(b[0] * r) * Math.cos((b[1] - a[1]) * r);
+  return (Math.atan2(y, x) / r + 360) % 360;
+};
+
+const LiveMap = ({ pickup, destination, routes = [], routeIndex = 0, progress = null, height, etaLabel, hexes = [], vehicles = [], driverPos = null, vehicleKind = "car", tripMode = false }: Props) => {
   const state = useMemo(
     () => ({
       pickup: { lat: pickup.latitude, lon: pickup.longitude },
@@ -79,6 +102,9 @@ const LiveMap = ({ pickup, destination, routes = [], routeIndex = 0, progress = 
       hexes,
       veh: vehicles.map((v) => [v.latitude, v.longitude, v.kind ?? "auto"]),
       drv: driverPos ? [driverPos.latitude, driverPos.longitude] : null,
+      vk: vehicleKind,
+      trip: tripMode,
+      cb: progress != null && routes[routeIndex] ? bearingAlong(routes[routeIndex].coords, progress) : 0,
     }),
     [pickup, destination, routes, routeIndex, progress, etaLabel, hexes, vehicles, driverPos],
   );

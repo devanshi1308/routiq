@@ -16,7 +16,7 @@ import { DEMO } from "@/constants/config";
 import { colors, font } from "@/constants/theme";
 import { track, useAnalytics } from "@/lib/analytics";
 import { findNearby, kindFor, simulateFleet, toBatches } from "@/lib/dispatch";
-import { clockTime, fareFor, RIDE_TYPES, RideType } from "@/lib/mock";
+import { clockTime, fareFor, haversineKm, RIDE_TYPES, RideType } from "@/lib/mock";
 import { surgeFor } from "@/lib/surge";
 import { useAuthStore, useChatStore, useHistoryStore, useNoticeStore, useTripStore } from "@/store";
 
@@ -175,7 +175,18 @@ const Trip = () => {
           height={status === "completed" ? 200 : status === "searching" ? 240 : 290}
           driverPos={status === "driver_assigned" ? driverPos : null}
           progress={status === "in_progress" ? progress : status === "completed" ? 1 : null}
+          vehicleKind={kindFor(rideType)}
+          tripMode={status === "driver_assigned" || status === "driver_arrived" || status === "in_progress"}
         />
+        {(status === "driver_assigned" || status === "driver_arrived" || status === "in_progress") && trusted.length === 0 && (
+          <Pressable accessibilityRole="button" onPress={() => router.push("/(root)/contacts?kind=share" as any)} style={{ position: "absolute", left: 12, right: 12, bottom: 12, height: 56, borderRadius: 28, backgroundColor: colors.blue, flexDirection: "row", alignItems: "center", paddingHorizontal: 16, gap: 10 }}>
+            <Ionicons name="shield-checkmark" size={24} color="#fff" />
+            <T style={{ flex: 1, color: "#fff", fontFamily: font.bold, fontSize: 15 }}>Add trusted contacts?</T>
+            <View style={{ backgroundColor: "#DCE8FF", borderRadius: 18, paddingHorizontal: 16, height: 36, justifyContent: "center" }}>
+              <T style={{ color: colors.blue, fontFamily: font.extra }}>Add</T>
+            </View>
+          </Pressable>
+        )}
         {status !== "completed" && (
           <SafeAreaView style={{ position: "absolute", top: 0, left: 16 }}>
             <IconCircle name="arrow-back" size={46} onPress={askCancel} />
@@ -280,6 +291,7 @@ const Trip = () => {
         {/* ---------- driver matched: "Pick-up in N min" ---------- */}
         {driver && status === "driver_assigned" && (
           <View style={{ marginTop: 14 }}>
+            {driverPos && <T style={{ fontFamily: font.extra, fontSize: 24, textAlign: "center", marginBottom: 12 }}>{Math.max(1, Math.ceil(etaSec / 60))} min · {(haversineKm({ ...pickup, ...driverPos }, pickup) * 1.3).toFixed(1)} km</T>}
             <Row style={{ backgroundColor: colors.blue, borderRadius: 14, paddingHorizontal: 16, height: 56, justifyContent: "space-between" }}>
               <Row style={{ gap: 10 }}>
                 <Ionicons name="keypad" size={18} color={colors.onInk} />
