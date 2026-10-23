@@ -10,6 +10,7 @@ import { useOffline } from "@/components/OfflineBanner";
 import SlideToAct from "@/components/SlideToAct";
 import Card from "@/components/driver/Card";
 import DriverDrawer, { DrawerItem } from "@/components/driver/DriverDrawer";
+import DriverHero from "@/components/driver/DriverHero";
 import NavCard from "@/components/driver/NavCard";
 import PinPanel from "@/components/driver/PinPanel";
 import RequestSheet from "@/components/driver/RequestSheet";
@@ -116,7 +117,19 @@ const Driver = () => {
       <DriverDrawer visible={menu} name={name} vehicle={[vehicle, plate].filter(Boolean).join(" · ")} items={items} onClose={() => setMenu(false)} />
 
       <SafeAreaView pointerEvents="box-none" style={{ flex: 1, justifyContent: "space-between" }}>
-        {/* top bar */}
+        {isDriver && status === "idle" ? (
+          <DriverHero
+            name={name}
+            online={online}
+            unread={useNoticeStore.getState().items.length > 0}
+            onOnline={setOnline}
+            onMenu={() => setMenu(true)}
+            onBell={go("/(root)/notifications")}
+            onSearch={(q) => router.push({ pathname: "/(root)/driver-earnings", params: { q } } as any)}
+            onEarnings={go("/(root)/driver-earnings")}
+            onRides={go("/(root)/driver-earnings")}
+          />
+        ) : (
         <Row style={{ justifyContent: "space-between", paddingHorizontal: 14, paddingTop: 6 }}>
           {isDriver ? (
             <Pressable accessibilityRole="button" accessibilityLabel="Menu" onPress={() => setMenu(true)} style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}>
@@ -142,6 +155,8 @@ const Driver = () => {
             <View style={{ width: 46 }} />
           )}
         </Row>
+
+        )}
 
         <View pointerEvents="box-none">
           {/* SOS */}
