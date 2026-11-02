@@ -90,6 +90,8 @@ type TripStore = {
   pin: string;
   requestId: string;
   /** when true, the demo advances every step by itself; when false, only the driver screen moves the trip */
+  /** offer switched on by tapping a tile such as Trip or Reserve */
+  offer: Offer | null;
   /** rider asked for women drivers only */
   womenOnly: boolean;
   /** a favourite driver to ask first */
@@ -157,6 +159,7 @@ export const useTripStore = create<TripStore>((set, get) => ({
   womenOnly: false,
   favDriver: null,
   split: [],
+  offer: null,
   autopilot: false,
   setAutopilot: (autopilot) => set({ autopilot }),
   batchNo: 0,
@@ -221,10 +224,11 @@ export const useTripStore = create<TripStore>((set, get) => ({
         : DRIVERS[Math.floor(Math.random() * 2)],
     });
   },
-  reset: () => set({ destination: null, rideType: null, preferred: null, routes: [], routeIndex: 0, status: "idle", driver: null, dispatch: null, batchNo: 0, progress: 0, walletPaid: 0, boost: 0, tip: 0, driverPos: null, etaSec: 0, fare: 0, remote: false, extras: [], womenOnly: false, favDriver: null, split: [] }),
+  reset: () => set({ destination: null, rideType: null, preferred: null, routes: [], routeIndex: 0, status: "idle", driver: null, dispatch: null, batchNo: 0, progress: 0, walletPaid: 0, boost: 0, tip: 0, driverPos: null, etaSec: 0, fare: 0, remote: false, extras: [], womenOnly: false, favDriver: null, split: [], offer: null }),
 }));
 
 import { servesRide } from "@/lib/fleet";
+import type { Offer } from "@/lib/offers";
 import { PAST_RIDES, PastRide } from "@/lib/mock";
 
 type HistoryStore = { rides: PastRide[]; add: (r: PastRide) => void };

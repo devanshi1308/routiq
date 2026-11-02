@@ -58,6 +58,7 @@ const RideMap = ({ pickup, destination, routes, routeIndex, height, etaLabel, se
 };
 
 const ChooseRide = () => {
+  const offer = useTripStore((t) => t.offer);
   const { preferred, voucher, pickup, destination, routes, routeIndex, setRoutes, setRouteIndex, rideType, selectRide, payment, setPayment, setFare, setStatus } = useTripStore();
   const [showRoutes, setShowRoutes] = useState(false);
   const [chosen, setChosen] = useState(false);
@@ -113,7 +114,15 @@ const ChooseRide = () => {
   const selected = rideType ?? RIDE_TYPES[0];
   const disp = dispatches[selected.id];
   const surgeOf = (id: string) => surgeFor(dispatches[id].originCell, dispatches[id].supply);
-  const priceOf = (r: (typeof RIDE_TYPES)[number], withVoucher = true) => (route ? fareFor(r, route) * surgeOf(r.id) * (r.id === "pool" ? (pool.length ? 0.65 : 0.8) : 1) * (voucher && withVoucher ? 0.9 : 1) : 0);
+  // discount for one ride: carpool has its shared-fare saving, others get the bigger of the voucher and the tapped offer
+  const discount = (r: (typeof RIDE_TYPES)[number]): { pct: number; label: string } => {
+    if (r.id === "pool") return pool.length ? { pct: 35, label: "Carpool · 35% off" } : { pct: 20, label: "Carpool · 20% off" };
+    const o = offer && (!offer.rideId || offer.rideId === r.id) ? offer : null;
+    if (o && (!voucher || o.pct > 10)) return { pct: o.pct, label: o.label };
+    if (voucher) return { pct: 10, label: `${voucher} · 10% off` };
+    return { pct: 0, label: "" };
+  };
+  const priceOf = (r: (typeof RIDE_TYPES)[number], withDiscount = true) => (route ? fareFor(r, route) * surgeOf(r.id) * (withDiscount ? 1 - discount(r).pct / 100 : 1) : 0);
   const etaOf = (id: string, fallback: number) => dispatches[id]?.candidates[0]?.etaMin ?? fallback;
   // Option badges: cheapest price and earliest arrival among the standard (non-shared) options.
   const standard = RIDE_TYPES.filter((r) => r.id !== "pool");
@@ -238,9 +247,9 @@ const ChooseRide = () => {
                 </View>
                 <View style={{ alignItems: "flex-end", marginLeft: 8 }}>
                   <View style={{ alignItems: "flex-end" }}>
-                    {route && voucher && <T style={{ color: colors.muted, fontSize: 13, textDecorationLine: "line-through" }}>₹{priceOf(r, false).toFixed(2)}</T>}
-                    <T style={{ fontFamily: font.bold, fontSize: 18, color: voucher ? colors.green : colors.text }}>{route ? `₹${priceOf(r).toFixed(2)}` : ""}</T>
-                    {route && voucher && <T style={{ color: colors.green, fontSize: 11, fontFamily: font.bold }}>{voucher} · 10% off</T>}
+                    {route && discount(r).pct > 0 && <T style={{ color: colors.muted, fontSize: 13, textDecorationLine: "line-through" }}>₹{priceOf(r, false).toFixed(2)}</T>}
+                    <T style={{ fontFamily: font.bold, fontSize: 18, color: discount(r).pct > 0 ? colors.green : colors.text }}>{route ? `₹${priceOf(r).toFixed(2)}` : ""}</T>
+                    {route && discount(r).pct > 0 && <T style={{ color: colors.green, fontSize: 11, fontFamily: font.bold }}>{discount(r).label}</T>}
                   </View>
                 </View>
               </Pressable>

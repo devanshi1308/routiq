@@ -9,6 +9,7 @@ import { H2, Row, Skeleton, T } from "@/components/ui";
 import { colors, font } from "@/constants/theme";
 import { startFlushing, track, useAnalytics } from "@/lib/analytics";
 import { locate, LocationState } from "@/lib/location";
+import { OFFERS } from "@/lib/offers";
 import { fmtVisits, popularNear } from "@/lib/popular";
 import { Place, recentFrom, SERVICE_RIDE, SERVICES } from "@/lib/mock";
 import { useAuthStore, useHistoryStore, useTripStore } from "@/store";
@@ -79,6 +80,7 @@ const Home = () => {
   const go = (p: Place) => {
     track("shortcut_clicked", { place_id: p.id });
     setPreferred(null);
+    useTripStore.setState({ offer: null });
     useAnalytics.getState().setSource("shortcut");
     setDestination(p);
     router.push("/(root)/choose-ride");
@@ -88,6 +90,7 @@ const Home = () => {
   const openService = (id: string) => {
     if (id === "carpool") return router.push("/(root)/carpool" as any);
     setPreferred(SERVICE_RIDE[id] ?? null);
+    useTripStore.setState({ offer: OFFERS[id] ?? null });
     useAnalytics.getState().setSource("search");
     router.push("/(root)/where-to");
   };

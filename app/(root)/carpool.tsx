@@ -17,6 +17,7 @@ const STEPS = [
 const Carpool = () => {
   const find = () => {
     useTripStore.getState().setPreferred("pool");
+    useTripStore.setState({ offer: null });
     router.push("/(root)/where-to");
   };
   return (

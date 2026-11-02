@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { H1, H2, T } from "@/components/ui";
 import { colors, font } from "@/constants/theme";
+import { OFFERS } from "@/lib/offers";
 import { SERVICE_RIDE, SERVICES } from "@/lib/mock";
 import { useTripStore } from "@/store";
 
@@ -23,6 +24,7 @@ const Services = () => {
             onPress={() => {
               if (svc.id === "carpool") return router.push("/(root)/carpool" as any);
               useTripStore.getState().setPreferred(SERVICE_RIDE[svc.id] ?? null);
+              useTripStore.setState({ offer: OFFERS[svc.id] ?? null });
               router.push("/(root)/where-to");
             }}
             style={{ width: tile, height: 120, backgroundColor: colors.card, borderRadius: 20, alignItems: "center", justifyContent: "center", gap: 8 }}

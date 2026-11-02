@@ -48,6 +48,7 @@ const WhereTo = () => {
   const { pickup, setDestination } = useTripStore();
   const rides = useHistoryStore((s) => s.rides);
   const { home, work, save } = useSavedStore();
+  const offerOn = useTripStore((t) => t.offer);
   const [q, setQ] = useState("");
   const [online, setOnline] = useState<Place[]>([]);
   const [saving, setSaving] = useState<"home" | "work" | null>(null);
@@ -125,6 +126,7 @@ const WhereTo = () => {
         <T style={{ fontFamily: font.bold, fontSize: 18 }}>Plan your ride</T>
       </Row>
 
+      {offerOn && <T style={{ marginHorizontal: 20, marginTop: 10, color: colors.green, fontFamily: font.bold, fontSize: 14 }}>{offerOn.label} will be applied to your ride</T>}
       <Row style={{ gap: 10, paddingHorizontal: 20, marginTop: 10 }}>
         <Row onPress={() => setWhen((when + 1) % WHEN.length)} style={{ gap: 6, borderWidth: 1, borderColor: colors.border, borderRadius: 20, height: 38, paddingHorizontal: 14 }}>
           <Ionicons name="time-outline" size={16} />
