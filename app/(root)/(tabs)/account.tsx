@@ -49,7 +49,7 @@ const Account = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       {dialog}
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 140 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 28 }}>
         <Row style={{ justifyContent: "space-between", marginTop: 16 }}>
           <View>
             <H1>{name}</H1>

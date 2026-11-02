@@ -16,13 +16,12 @@ const icon = (name: string, nameOutline: string, dot?: boolean) =>
 // Floating rounded tab bar. Drawn by hand because the built-in one paints a square highlight on phones.
 const PillTabBar = ({ state, descriptors, navigation }: any) => {
   const insets = useSafeAreaInsets();
+  // The bar takes up real space at the bottom (it is not an overlay). On Android, taps only reach a view that lies inside
+  // its parent's bounds, and an overlay hanging outside them was why the tabs did not respond.
   return (
+    <View style={{ backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 12) + 4 }}>
     <View
       style={{
-        position: "absolute",
-        left: 20,
-        right: 20,
-        bottom: Math.max(insets.bottom, 12) + 4,
         height: 72,
         borderRadius: 36,
         backgroundColor: colors.bg,
@@ -65,6 +64,7 @@ const PillTabBar = ({ state, descriptors, navigation }: any) => {
           </Pressable>
         );
       })}
+    </View>
     </View>
   );
 };

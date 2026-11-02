@@ -13,7 +13,7 @@ const Services = () => {
   const tile = Math.floor((width - 40 - 36) / 4); // 4 equal tiles per row, 20px side padding, 12px gaps
   return (
   <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-    <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 140 }}>
+    <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 28 }}>
       <H1 style={{ marginTop: 24 }}>Services</H1>
       <H2 style={{ fontSize: 26, marginTop: 28, marginBottom: 20 }}>Go anywhere, get anything</H2>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>

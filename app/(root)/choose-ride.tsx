@@ -113,7 +113,7 @@ const ChooseRide = () => {
   const selected = rideType ?? RIDE_TYPES[0];
   const disp = dispatches[selected.id];
   const surgeOf = (id: string) => surgeFor(dispatches[id].originCell, dispatches[id].supply);
-  const priceOf = (r: (typeof RIDE_TYPES)[number]) => (route ? fareFor(r, route) * surgeOf(r.id) * (r.id === "pool" ? (pool.length ? 0.65 : 0.8) : 1) * (voucher ? 0.9 : 1) : 0);
+  const priceOf = (r: (typeof RIDE_TYPES)[number], withVoucher = true) => (route ? fareFor(r, route) * surgeOf(r.id) * (r.id === "pool" ? (pool.length ? 0.65 : 0.8) : 1) * (voucher && withVoucher ? 0.9 : 1) : 0);
   const etaOf = (id: string, fallback: number) => dispatches[id]?.candidates[0]?.etaMin ?? fallback;
   // Option badges: cheapest price and earliest arrival among the standard (non-shared) options.
   const standard = RIDE_TYPES.filter((r) => r.id !== "pool");
@@ -237,7 +237,11 @@ const ChooseRide = () => {
                   </Row>
                 </View>
                 <View style={{ alignItems: "flex-end", marginLeft: 8 }}>
-                  <T style={{ fontFamily: font.bold, fontSize: 18 }}>{route ? `₹${priceOf(r).toFixed(2)}` : ""}</T>
+                  <View style={{ alignItems: "flex-end" }}>
+                    {route && voucher && <T style={{ color: colors.muted, fontSize: 13, textDecorationLine: "line-through" }}>₹{priceOf(r, false).toFixed(2)}</T>}
+                    <T style={{ fontFamily: font.bold, fontSize: 18, color: voucher ? colors.green : colors.text }}>{route ? `₹${priceOf(r).toFixed(2)}` : ""}</T>
+                    {route && voucher && <T style={{ color: colors.green, fontSize: 11, fontFamily: font.bold }}>{voucher} · 10% off</T>}
+                  </View>
                 </View>
               </Pressable>
             );

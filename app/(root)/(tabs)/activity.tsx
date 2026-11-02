@@ -20,7 +20,7 @@ const Activity = () => {
   const rides = all.filter((r) => filter === "All" || (filter === "Business" ? r.business : r.status.toLowerCase() === filter.toLowerCase()));
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 140 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 28 }}>
         <H1 style={{ marginTop: 16 }}>Activity</H1>
         <H2 style={{ fontSize: 26, marginTop: 28, marginBottom: 14 }}>Upcoming</H2>
         {commutes.map((p) => (

@@ -44,6 +44,7 @@ const Promo = () => {
           <View style={{ flex: 1 }}>
             <T style={{ fontFamily: font.bold, fontSize: 17 }}>{voucher} is on your account</T>
             <T style={{ color: colors.muted }}>{PROMO_CODES[voucher] ?? "10% off your next ride"}</T>
+            <T style={{ color: colors.green, fontFamily: font.semi, fontSize: 13, marginTop: 2 }}>Example: a ₹200 ride becomes ₹180</T>
           </View>
           <T onPress={() => setVoucher(null)} style={{ color: colors.red, fontFamily: font.bold }}>Remove</T>
         </Row>

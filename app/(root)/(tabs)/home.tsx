@@ -94,7 +94,7 @@ const Home = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 28 }} showsVerticalScrollIndicator={false}>
         <Row style={{ justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 12, }}>
           <Row style={{ gap: 8, flex: 1, marginRight: 12 }} onPress={refreshLocation}>
             <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: locState === "denied" || locState === "unavailable" ? colors.muted : colors.blue }} />
