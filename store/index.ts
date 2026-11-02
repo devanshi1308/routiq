@@ -15,7 +15,8 @@ export type TripStatus =
 type Driver = (typeof DRIVERS)[number];
 
 export type Role = "rider" | "driver";
-type Profile = { name: string; email: string; vehicle?: string; plate?: string };
+export type Approval = "incomplete" | "pending" | "approved";
+type Profile = { name: string; email: string; vehicle?: string; plate?: string; approval?: Approval };
 
 type AuthStore = {
   signedIn: boolean;
@@ -25,6 +26,9 @@ type AuthStore = {
   phone: string;
   vehicle: string;
   plate: string;
+  /** driver sign-up status: finish the onboarding, wait for review, then approved drivers can go online */
+  approval: Approval;
+  setApproval: (a: Approval) => void;
   /** mock user database keyed by "role:phone-or-email", so returning users skip sign-up */
   registry: Record<string, Profile>;
   isRegistered: (id: string, role: Role) => boolean;
@@ -41,18 +45,25 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   phone: "",
   vehicle: "",
   plate: "",
+  approval: "approved",
+  setApproval: (approval) =>
+    set((st) => {
+      const key = `${st.role}:${st.phone}`;
+      const u = st.registry[key];
+      return { approval, registry: u ? { ...st.registry, [key]: { ...u, approval } } : st.registry };
+    }),
   registry: {
     "rider:9876543210": { name: "Devanshi K", email: "devanshikambli2006@gmail.com" },
     "rider:devanshikambli2006@gmail.com": { name: "Devanshi K", email: "devanshikambli2006@gmail.com" },
-    "driver:9988776655": { name: "Ramesh Yadav", email: "ramesh@example.com", vehicle: "Bajaj RE Auto", plate: "MH 02 QR 4471" },
+    "driver:9988776655": { name: "Ramesh Yadav", email: "ramesh@example.com", vehicle: "Bajaj RE Auto", plate: "MH 02 QR 4471", approval: "approved" },
   },
   isRegistered: (id, role) => !!get().registry[`${role}:${id}`],
   signIn: (id, role) => {
     const u = get().registry[`${role}:${id}`];
-    set({ signedIn: true, role, phone: id, name: u?.name ?? "Devanshi K", email: u?.email ?? "", vehicle: u?.vehicle ?? "", plate: u?.plate ?? "" });
+    set({ signedIn: true, role, phone: id, name: u?.name ?? "Devanshi K", email: u?.email ?? "", vehicle: u?.vehicle ?? "", plate: u?.plate ?? "", approval: u?.approval ?? "approved" });
   },
   register: (id, role, name, email, vehicle = "", plate = "") =>
-    set((st) => ({ registry: { ...st.registry, [`${role}:${id}`]: { name, email, vehicle, plate } }, signedIn: true, role, phone: id, name, email, vehicle, plate })),
+    set((st) => ({ registry: { ...st.registry, [`${role}:${id}`]: { name, email, vehicle, plate, approval: role === "driver" ? "incomplete" : "approved" } }, signedIn: true, role, phone: id, name, email, vehicle, plate, approval: role === "driver" ? "incomplete" : "approved" })),
   signOut: () => set({ signedIn: false }),
 }));
 
@@ -93,6 +104,8 @@ type TripStore = {
   setAutopilot: (v: boolean) => void;
   batchNo: number;
   progress: number;
+  /** part of the fare already paid from Routiq Cash, so the driver only collects the rest */
+  walletPaid: number;
   acceptRide: () => void;
   declineBatch: () => void;
   markArrived: () => void;
@@ -148,6 +161,7 @@ export const useTripStore = create<TripStore>((set, get) => ({
   setAutopilot: (autopilot) => set({ autopilot }),
   batchNo: 0,
   progress: 0,
+  walletPaid: 0,
   // Driver-side actions. The rider screen only reacts to the status these set.
   acceptRide: () => {
     const { dispatch, batchNo, status } = get();
@@ -207,7 +221,7 @@ export const useTripStore = create<TripStore>((set, get) => ({
         : DRIVERS[Math.floor(Math.random() * 2)],
     });
   },
-  reset: () => set({ destination: null, rideType: null, preferred: null, routes: [], routeIndex: 0, status: "idle", driver: null, dispatch: null, batchNo: 0, progress: 0, boost: 0, tip: 0, driverPos: null, etaSec: 0, fare: 0, remote: false, extras: [], womenOnly: false, favDriver: null, split: [] }),
+  reset: () => set({ destination: null, rideType: null, preferred: null, routes: [], routeIndex: 0, status: "idle", driver: null, dispatch: null, batchNo: 0, progress: 0, walletPaid: 0, boost: 0, tip: 0, driverPos: null, etaSec: 0, fare: 0, remote: false, extras: [], womenOnly: false, favDriver: null, split: [] }),
 }));
 
 import { servesRide } from "@/lib/fleet";

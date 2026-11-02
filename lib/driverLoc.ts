@@ -33,4 +33,8 @@ export const startDriverLocation = async () => {
 export const stopDriverLocation = () => {
   sub?.remove();
   sub = null;
+  useDriverLoc.setState({ pos: null, state: "idle" });
 };
+
+/** Farthest the phone can be from the pickup and still be used for the live approach; beyond this the demo path is used. */
+export const MAX_REAL_KM = 30;

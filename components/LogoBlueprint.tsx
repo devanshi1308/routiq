@@ -2,12 +2,12 @@ import { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, useWindowDimensions, View } from "react-native";
 import Svg, { Circle, Line } from "react-native-svg";
 
-// Blueprint-style logo reveal (like a wordmark being constructed on a grid): thin blue guide lines and circles appear,
-// a bright blue line sweeps across and reveals the logo behind it, then the guides fade away and the clean logo stays.
+// Blueprint-style logo reveal (like a wordmark being constructed on a grid): thin white guide lines and circles appear,
+// a bright white line sweeps across and reveals the logo behind it, then the guides fade away and the clean logo stays.
 // About 2.6 seconds. Positions below are in the logo image's own pixels (475 x 605) and are scaled to the screen.
 const LW = 475;
 const LH = 605;
-const BLUE = "#4D7CFE";
+const BLUE = "#FFFFFF";
 
 const LogoBlueprint = ({ logoWidth = 300, onDone }: { logoWidth?: number; onDone?: () => void }) => {
   const { width: W, height: H } = useWindowDimensions();
@@ -56,7 +56,7 @@ const LogoBlueprint = ({ logoWidth = 300, onDone }: { logoWidth?: number; onDone
         </Svg>
       </Animated.View>
 
-      {/* the logo, uncovered from left to right as the blue line passes */}
+      {/* the logo, uncovered from left to right as the white line passes */}
       <Animated.View style={{ position: "absolute", left: ox, top: oy, width: revealW, height: lh, overflow: "hidden" }}>
         <Animated.Image source={require("../assets/logo/routiq-white.png")} style={{ width: logoWidth, height: lh }} resizeMode="contain" />
       </Animated.View>

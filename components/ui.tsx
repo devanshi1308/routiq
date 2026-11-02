@@ -5,6 +5,7 @@ import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, Te
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors, font } from "@/constants/theme";
+import { useAuthStore } from "@/store";
 
 /** the browser draws a focus ring on text boxes; this removes it on web only (outlineStyle is not valid on phones) */
 export const noOutline: any = Platform.OS === "web" ? { outlineStyle: "none" } : {};
@@ -56,7 +57,7 @@ export const IconCircle = ({ name, onPress, size = 40 }: { name: any; onPress?: 
 
 export const Header = ({ title }: { title?: string }) => (
   <View style={mk().header}>
-    <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace("/(root)/(tabs)/home"))} hitSlop={12}>
+    <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace(useAuthStore.getState().role === "driver" ? "/(root)/driver" : "/(root)/(tabs)/home"))} hitSlop={12}>
       <Ionicons name="close" size={28} color={colors.text} />
     </Pressable>
     {title ? <T style={{ fontFamily: font.bold, fontSize: 17 }}>{title}</T> : null}

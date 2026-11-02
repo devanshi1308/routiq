@@ -18,6 +18,7 @@ const BADGES: Record<string, string> = { trip: "25%", reserve: "20%", carpool: "
 const FOR_YOU = ["auto", "trip", "bike", "carpool", "reserve"];
 
 const Home = () => {
+  const s = mkStyles();
   const name = useAuthStore((s) => s.name).split(" ")[0];
   const rides = useHistoryStore((s) => s.rides);
   const recents = recentFrom(rides, 2);
@@ -194,8 +195,8 @@ const Home = () => {
                   ].map((c) => (
                     <Pressable key={c.t} onPress={() => openService(c.id)} style={[s.promo, { backgroundColor: c.c }]}>
                       <Vehicle kind={c.e as VehicleKind} size={90} />
-                      <T style={{ fontFamily: font.bold, fontSize: 18, marginTop: 8 }}>{c.t}</T>
-                      <T style={{ fontSize: 14 }}>{c.d}</T>
+                      <T style={{ fontFamily: font.bold, fontSize: 18, marginTop: 8, color: "#000" }}>{c.t}</T>
+                      <T style={{ fontSize: 14, color: "#222" }}>{c.d}</T>
                     </Pressable>
                   ))}
                 </ScrollView>
@@ -207,7 +208,7 @@ const Home = () => {
   );
 };
 
-const s = StyleSheet.create({
+const mkStyles = () => StyleSheet.create({
   search: { flexDirection: "row", alignItems: "center", gap: 14, height: 64, borderRadius: 32, borderWidth: 1, borderColor: colors.border, paddingLeft: 20, paddingRight: 10, marginTop: 20, backgroundColor: colors.bg, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 3 } },
   later: { gap: 8, backgroundColor: colors.card, paddingHorizontal: 16, height: 46, borderRadius: 23 },
   recent: { borderWidth: 1, borderColor: colors.border, borderRadius: 20, marginTop: 20 },

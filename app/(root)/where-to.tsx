@@ -103,9 +103,9 @@ const WhereTo = () => {
   const heading = (t: string) => <T style={{ fontFamily: font.semi, fontSize: 12, color: colors.muted, letterSpacing: 0.5, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 2 }}>{t}</T>;
 
   const pill = (icon: any, label: string, onPress?: () => void, active = false) => (
-    <Pressable onPress={onPress} style={{ flexDirection: "row", alignItems: "center", gap: 6, height: 38, paddingHorizontal: 14, borderRadius: 19, backgroundColor: active ? "#000" : colors.card }}>
-      <Ionicons name={icon} size={15} color={active ? "#fff" : "#000"} />
-      <T style={{ fontFamily: font.semi, fontSize: 14, color: active ? "#fff" : "#000" }}>{label}</T>
+    <Pressable onPress={onPress} style={{ flexDirection: "row", alignItems: "center", gap: 6, height: 38, paddingHorizontal: 14, borderRadius: 19, backgroundColor: active ? colors.ink : colors.card }}>
+      <Ionicons name={icon} size={15} color={active ? colors.onInk : colors.text} />
+      <T style={{ fontFamily: font.semi, fontSize: 14, color: active ? colors.onInk : colors.text }}>{label}</T>
     </Pressable>
   );
 
@@ -188,7 +188,7 @@ const WhereTo = () => {
             {local.map((p) => row(p, "location-outline"))}
             {online.length > 0 && heading("MORE RESULTS")}
             {online.map((p) => row(p, "search"))}
-            {local.length + online.length === 0 && <T style={{ textAlign: "center", color: colors.muted, marginTop: 40 }}>No places found</T>}
+            {local.length + online.length === 0 && <T style={{ textAlign: "center", color: colors.muted, marginTop: 40 }}>No places found. Check the spelling, or try a nearby landmark or area name.</T>}
           </>
         )}
       </ScrollView>

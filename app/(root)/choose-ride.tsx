@@ -176,7 +176,7 @@ const ChooseRide = () => {
                       track("route_selected", { request_id: "pending", route: rt.name, km: rt.km, minutes: rt.minutes });
                       setChosen(i !== 0);
                     }}
-                    style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 12, borderWidth: on ? 2 : 1, borderColor: on ? "#000" : colors.border }}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 12, borderWidth: on ? 2 : 1, borderColor: on ? colors.ink : colors.border }}
                   >
                     <Ionicons name={on ? "radio-button-on" : "radio-button-off"} size={20} />
                     <View style={{ flex: 1 }}>
@@ -277,6 +277,9 @@ const ChooseRide = () => {
             </View>
             <Ionicons name="chevron-forward" size={20} />
           </Row>
+          {womenOnly && disp.candidates.length === 0 && (
+            <Button title="Show all drivers instead" variant="outline" onPress={() => useTripStore.setState({ womenOnly: false })} />
+          )}
           <Button title={womenOnly && disp.candidates.length === 0 ? "No women drivers nearby" : `Choose ${selected.name}`} disabled={womenOnly && disp.candidates.length === 0} onPress={book} />
         </View>
       </View>

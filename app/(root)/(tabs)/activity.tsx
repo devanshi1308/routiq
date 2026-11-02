@@ -61,6 +61,11 @@ const Activity = () => {
           <Vehicle kind="coin" size={64} />
         </Pressable>
         {rides.length === 0 && <T style={{ color: colors.muted, marginTop: 20 }}>{all.length ? `No ${filter.toLowerCase()} trips.` : "Your trips will show up here after your first ride."}</T>}
+        {rides.length === 0 && (
+          <Pressable accessibilityRole="button" onPress={() => (all.length ? setFilter("All") : router.push("/(root)/where-to" as any))} style={{ marginTop: 14, alignSelf: "flex-start", paddingHorizontal: 20, height: 46, borderRadius: 23, backgroundColor: colors.ink, justifyContent: "center" }}>
+            <T style={{ fontFamily: font.bold, color: colors.onInk }}>{all.length ? "Show all trips" : "Book a ride"}</T>
+          </Pressable>
+        )}
 
         {rides.map((r) => (
           <View key={r.id} style={[card, { flexDirection: "column", alignItems: "stretch", padding: 16, marginTop: 20 }]}>

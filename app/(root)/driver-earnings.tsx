@@ -35,6 +35,7 @@ const DriverEarnings = () => {
       <T style={{ fontFamily: font.bold, fontSize: 22, marginTop: 26, marginBottom: 10 }}>Trips</T>
       <Field value={q} onChangeText={setQ} placeholder="Search your trips" />
       {rides.length === 0 && <T style={{ color: colors.muted, marginTop: 10 }}>{all.length ? `No trips match "${q}".` : "No trips yet. Your finished trips will show up here."}</T>}
+      {all.length === 0 && <Button title="Go online and get requests" onPress={() => { useDriverStore.getState().setOnline(true); router.replace("/(root)/driver" as any); }} style={{ marginTop: 14 }} />}
       {rides.map((r) => (
         <Row key={r.id} style={{ gap: 12, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
           <Ionicons name="checkmark-circle" size={22} color={colors.green} />

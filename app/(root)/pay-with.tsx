@@ -41,7 +41,7 @@ const PayWith = () => {
   const seg = (p: "Personal" | "Business", icon: any) => (
     <Row
       onPress={() => setProfile(p)}
-      style={{ flex: 1, height: 52, justifyContent: "center", gap: 8, borderRadius: 10, borderWidth: 2, borderColor: profile === p ? "#000" : "transparent" }}
+      style={{ flex: 1, height: 52, justifyContent: "center", gap: 8, borderRadius: 10, borderWidth: 2, borderColor: profile === p ? colors.ink : "transparent" }}
     >
       <Ionicons name={icon} size={18} />
       <T style={{ fontFamily: font.bold, fontSize: 17 }}>{p}</T>

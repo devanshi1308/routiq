@@ -1,6 +1,6 @@
-import { router } from "expo-router";
+import { Redirect, router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Switch, useWindowDimensions, View } from "react-native";
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useConfirm } from "@/components/Confirm";
@@ -19,7 +19,7 @@ import { Button, Row, T } from "@/components/ui";
 import { DEMO } from "@/constants/config";
 import { colors, font } from "@/constants/theme";
 import { toBatches } from "@/lib/dispatch";
-import { startDriverLocation, useDriverLoc } from "@/lib/driverLoc";
+import { MAX_REAL_KM, startDriverLocation, stopDriverLocation, useDriverLoc } from "@/lib/driverLoc";
 import { avgSpeed, fmtClock, nextTurn } from "@/lib/driverNav";
 import { CLASS_LABEL, classOf, servesRide } from "@/lib/fleet";
 import { openGoogleMaps } from "@/lib/maps";
@@ -32,13 +32,21 @@ import { useDriverStore } from "@/store/extras";
 const Driver = () => {
   const trip = useTripStore();
   const { status, dispatch, batchNo, destination, pickup, fare, tip, rideType, routes, routeIndex, progress, etaSec, driver, driverPos } = trip;
-  const { role, name, vehicle, plate, signOut } = useAuthStore();
+  const { role, name, vehicle, plate, approval, signOut } = useAuthStore();
+  const unreadNotices = useNoticeStore((n) => n.items.length > 0);
+  const walletPaid = useTripStore((t) => t.walletPaid);
   const rides = useHistoryStore((s) => s.rides);
-  const [online, setOnline] = useState(true);
+  const online = useDriverStore((d) => d.online);
+  const setOnline = useDriverStore((d) => d.setOnline);
+  const rateRider = useDriverStore((d) => d.rateRider);
+  const [collected, setCollected] = useState(false);
+  const [stars, setStars] = useState(5);
+  const [waited, setWaited] = useState(0);
   const [menu, setMenu] = useState(false);
   const { height: H } = useWindowDimensions();
 
   const isDriver = role === "driver";
+  // a driver who has not finished the sign-up steps (or is waiting for review) cannot reach the home screen yet
   const wave = useMemo(() => toBatches(dispatch?.candidates ?? [])[batchNo], [dispatch, batchNo]);
   const route = routes[routeIndex];
   const turn = useMemo(() => nextTurn(route, progress), [route, progress]);
@@ -49,12 +57,28 @@ const Driver = () => {
 
   const [ask, dialog] = useConfirm();
   const loc = useDriverLoc();
+  // follow the phone's GPS only while this driver is online, and stop when they go offline or leave
   useEffect(() => {
-    if (isDriver) startDriverLocation();
-  }, [isDriver]);
+    if (isDriver && online && approval === "approved") startDriverLocation();
+    else stopDriverLocation();
+    return () => stopDriverLocation();
+  }, [isDriver, online, approval]);
   const offline = useOffline();
 
-  const away = loc.pos ? (() => { const km = +(haversineKm({ ...pickup, ...loc.pos }, pickup) * 1.3).toFixed(1); return { km, min: Math.max(1, Math.ceil((km / 25) * 60)) }; })() : { km: wave?.[0]?.km ?? 0, min: wave?.[0]?.etaMin ?? 0 };
+  // time spent waiting for the rider at the pickup (the first 5 minutes are free)
+  useEffect(() => {
+    if (status !== "driver_arrived") return setWaited(0);
+    const t = setInterval(() => setWaited((w) => w + 1), 1000);
+    return () => clearInterval(t);
+  }, [status]);
+  useEffect(() => {
+    if (status !== "completed") {
+      setCollected(false);
+      setStars(5);
+    }
+  }, [status]);
+
+  const away = loc.pos && haversineKm({ ...pickup, ...loc.pos }, pickup) <= MAX_REAL_KM ? (() => { const km = +(haversineKm({ ...pickup, ...loc.pos }, pickup) * 1.3).toFixed(1); return { km, min: Math.max(1, Math.ceil((km / 25) * 60)) }; })() : { km: wave?.[0]?.km ?? 0, min: wave?.[0]?.etaMin ?? 0 };
   const showStage = online || !isDriver;
 
   // which requests this driver can take: by vehicle, and women-rider requests only for women drivers
@@ -94,6 +118,8 @@ const Driver = () => {
     { icon: "log-out-outline", label: "Logout", onPress: logout, danger: true },
   ];
 
+  if (isDriver && approval !== "approved") return <Redirect href={"/(auth)/driver-onboarding" as any} />;
+
   const leave = () => {
     if (router.canGoBack()) router.back();
     else router.replace(status === "idle" ? "/(root)/(tabs)/home" : "/(root)/trip");
@@ -121,7 +147,7 @@ const Driver = () => {
           <DriverHero
             name={name}
             online={online}
-            unread={useNoticeStore.getState().items.length > 0}
+            unread={unreadNotices}
             onOnline={setOnline}
             onMenu={() => setMenu(true)}
             onBell={go("/(root)/notifications")}
@@ -174,6 +200,19 @@ const Driver = () => {
                   <T style={{ fontFamily: font.bold, fontSize: 18 }}>You're offline</T>
                   <T style={{ color: colors.muted, marginTop: 4 }}>Go online to see ride requests near you.</T>
                   <Button title="Go online" onPress={() => setOnline(true)} style={{ marginTop: 14 }} />
+                </Card>
+              )}
+
+              {isDriver && online && (loc.state === "denied" || loc.state === "unavailable") && (
+                <Card style={{ marginTop: 0, marginBottom: 10, borderWidth: 1.5, borderColor: colors.red }}>
+                  <Row style={{ gap: 10 }}>
+                    <Ionicons name="location-outline" size={24} color={colors.red} />
+                    <View style={{ flex: 1 }}>
+                      <T style={{ fontFamily: font.bold }}>{loc.state === "denied" ? "Location is off" : "Can't get your location"}</T>
+                      <T style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>Turn it on so riders can see you coming and you get nearby requests.</T>
+                    </View>
+                  </Row>
+                  <Button title={loc.state === "denied" && Platform.OS !== "web" ? "Open settings" : "Try again"} variant="grey" onPress={() => (loc.state === "denied" && Platform.OS !== "web" ? Linking.openSettings() : (stopDriverLocation(), startDriverLocation()))} style={{ marginTop: 10, height: 44, backgroundColor: colors.card }} />
                 </Card>
               )}
 
@@ -233,6 +272,13 @@ const Driver = () => {
 
               {showStage && status === "driver_arrived" && (
                 <>
+                  <Card style={{ marginTop: 0 }}>
+                    <Row style={{ justifyContent: "space-between" }}>
+                      <T style={{ fontFamily: font.bold }}>Waiting for the rider</T>
+                      <T style={{ fontFamily: font.extra, color: waited > 300 ? colors.red : colors.text }}>{fmtClock(waited)}</T>
+                    </Row>
+                    <T style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>{waited > 300 ? "Free waiting time is over. You can cancel if the rider does not come." : `The first 5 minutes are free (${fmtClock(Math.max(0, 300 - waited))} left).`}</T>
+                  </Card>
                   <PinPanel onSubmit={startTrip} />
                   <View style={{ marginTop: 12 }}>
                     <SlideToAct label="Slide to cancel" tone="red" onComplete={() => ask({ title: "Cancel this ride?", message: "The rider will be matched with another driver.", confirm: "Cancel ride", destructive: true, onConfirm: driverCancel })} />
@@ -256,14 +302,36 @@ const Driver = () => {
                 </>
               )}
 
-              {status === "completed" && (
-                <Card style={{ marginTop: 0 }}>
-                  <T style={{ color: colors.muted, fontSize: 12, letterSpacing: 0.5 }}>YOU EARNED</T>
-                  <T style={{ fontFamily: font.extra, fontSize: 38 }}>₹{(fare + tip).toFixed(2)}</T>
-                  <T style={{ color: colors.muted, marginTop: 2 }}>Trip complete{tip ? `, including a ₹${tip} tip` : ""}. Great job!</T>
-                  {isDriver && <Button title="Done" onPress={trip.reset} style={{ marginTop: 14 }} />}
-                </Card>
-              )}
+              {status === "completed" && (() => {
+                const total = +((fare + tip) / (trip.split.length + 1)).toFixed(2); // what the rider pays
+                const due = trip.payment === "Cash" ? Math.max(0, +(total - walletPaid).toFixed(2)) : 0;
+                const needsCash = isDriver && due > 0 && !collected;
+                return (
+                  <Card style={{ marginTop: 0 }}>
+                    <T style={{ color: colors.muted, fontSize: 12, letterSpacing: 0.5 }}>YOU EARNED</T>
+                    <T style={{ fontFamily: font.extra, fontSize: 38 }}>₹{((fare + tip) * 0.9).toFixed(2)}</T>
+                    <T style={{ color: colors.muted, marginTop: 2 }}>Trip complete{tip ? `, including a ₹${tip} tip` : ""}, after Routiq's 10% fee. Great job!</T>
+                    {isDriver && (
+                      <>
+                        <View style={{ marginTop: 14, backgroundColor: colors.card, borderRadius: 14, padding: 14 }}>
+                          <T style={{ fontFamily: font.bold }}>{due > 0 ? (collected ? `₹${due.toFixed(2)} cash collected` : `Collect ₹${due.toFixed(2)} in cash`) : "Paid in the app"}</T>
+                          <T style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{due > 0 ? (collected ? "Thanks. You can rate the rider and finish." : "Take the cash from the rider before you finish.") : `Nothing to collect. ${trip.payment} was used.`}</T>
+                          {needsCash && <Button title="Cash collected" variant="grey" onPress={() => setCollected(true)} style={{ marginTop: 10, height: 46, backgroundColor: colors.bg }} />}
+                        </View>
+                        <T style={{ fontFamily: font.bold, marginTop: 14 }}>Rate your rider</T>
+                        <Row style={{ gap: 6, marginTop: 6 }}>
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <Pressable key={n} accessibilityRole="button" accessibilityLabel={`${n} star${n > 1 ? "s" : ""}`} onPress={() => setStars(n)} hitSlop={6}>
+                              <Ionicons name={n <= stars ? "star" : "star-outline"} size={32} />
+                            </Pressable>
+                          ))}
+                        </Row>
+                        <Button title="Done" disabled={needsCash} onPress={() => { rateRider(stars); trip.reset(); }} style={{ marginTop: 14 }} />
+                      </>
+                    )}
+                  </Card>
+                );
+              })()}
 
               {DEMO && (
                 <Card style={{ marginTop: 12 }}>

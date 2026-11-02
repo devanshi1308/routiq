@@ -17,6 +17,7 @@ import { colors, font } from "@/constants/theme";
 import { Country, INDIA, phoneValid } from "@/lib/countries";
 import { getFlag } from "@/lib/persist";
 import { Role, useAuthStore } from "@/store";
+import { useDriverStore } from "@/store/extras";
 
 type Step = "id" | "otp" | "signup" | "g-email" | "g-pass" | "a-id" | "a-share";
 
@@ -68,7 +69,7 @@ const Welcome = () => {
 
   // After signing in: riders are asked for location access once, then go Home. Drivers go to their screen.
   const finish = async () => {
-    if (role === "driver") return router.replace("/(root)/driver");
+    if (role === "driver") return router.replace(useAuthStore.getState().approval === "approved" ? "/(root)/driver" : ("/(auth)/driver-onboarding" as any));
     const asked = await getFlag("askedLocation");
     router.replace(asked ? "/(root)/(tabs)/home" : ("/(auth)/allow-location" as any));
   };
@@ -137,7 +138,7 @@ const Welcome = () => {
           {step === "id" && (
             <Row style={{ backgroundColor: colors.card, borderRadius: 12, padding: 3, marginBottom: 20 }}>
               {(["rider", "driver"] as Role[]).map((r) => (
-                <Row key={r} onPress={() => setRole(r)} style={{ flex: 1, height: 48, justifyContent: "center", gap: 8, borderRadius: 10, borderWidth: 2, borderColor: role === r ? "#000" : "transparent" }}>
+                <Row key={r} onPress={() => setRole(r)} style={{ flex: 1, height: 48, justifyContent: "center", gap: 8, borderRadius: 10, borderWidth: 2, borderColor: role === r ? colors.ink : "transparent" }}>
                   <Ionicons name={r === "rider" ? "person" : "car"} size={18} />
                   <T style={{ fontFamily: font.bold, fontSize: 16 }}>{r === "rider" ? "Rider" : "Driver"}</T>
                 </Row>
@@ -215,7 +216,7 @@ const Welcome = () => {
               <T style={{ color: colors.muted, marginBottom: 22 }}>We sent a 4-digit code to {useEmail ? value : `${country.dial} ${value}`}</T>
               <Pressable onPress={() => otpInput.current?.focus()} style={{ flexDirection: "row", gap: 12, justifyContent: "center" }}>
                 {[0, 1, 2, 3].map((i) => (
-                  <View key={i} style={{ width: 62, height: 62, borderRadius: 12, backgroundColor: colors.card, borderWidth: 2, borderColor: otp.length === i ? "#000" : "transparent", alignItems: "center", justifyContent: "center" }}>
+                  <View key={i} style={{ width: 62, height: 62, borderRadius: 12, backgroundColor: colors.card, borderWidth: 2, borderColor: otp.length === i ? colors.ink : "transparent", alignItems: "center", justifyContent: "center" }}>
                     <T style={{ fontFamily: font.extra, fontSize: 26 }}>{otp[i] ?? ""}</T>
                   </View>
                 ))}
@@ -449,6 +450,7 @@ const Welcome = () => {
                 title="Create account"
                 disabled={!first.trim() || (!useEmail && !emailOk(mail)) || (role === "driver" && !plateOk(plate))}
                 onPress={() => {
+                  if (role === "driver") useDriverStore.getState().startOnboarding();
                   register(accountId, role, `${first.trim()} ${last.trim()}`.trim(), useEmail ? accountId : mail, role === "driver" ? vehicle : "", role === "driver" ? plate.trim().toUpperCase() : "");
                   finish();
                 }}

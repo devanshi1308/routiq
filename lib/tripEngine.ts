@@ -1,6 +1,6 @@
 import { track, useAnalytics } from "@/lib/analytics";
 import { toBatches } from "@/lib/dispatch";
-import { useDriverLoc } from "@/lib/driverLoc";
+import { MAX_REAL_KM, useDriverLoc } from "@/lib/driverLoc";
 import { haversineKm } from "@/lib/mock";
 import { useSafetyStore, useWalletStore } from "@/store/extras";
 import { useAuthStore, useBusinessStore, useChatStore, useHistoryStore, useNoticeStore, useTripStore } from "@/store";
@@ -54,7 +54,9 @@ const react = () => {
   if (s.status === "driver_assigned" && s.driver && !s.remote && !etaTimer && etaKey !== s.requestId) {
     etaKey = s.requestId;
     const cand = s.dispatch?.candidates.find((c) => c.id === s.driver!.id);
-    const real = useAuthStore.getState().role === "driver" ? useDriverLoc.getState().pos : null; // the driver's own phone position
+    const mine = useAuthStore.getState().role === "driver" ? useDriverLoc.getState().pos : null; // the driver's own phone position
+    // a phone in another city would make the approach last for hours, so only use a position near the pickup
+    const real = mine && haversineKm({ ...s.pickup, ...mine }, s.pickup) <= MAX_REAL_KM ? mine : null;
     const from = real ?? cand ?? { latitude: s.pickup.latitude + 0.01, longitude: s.pickup.longitude + 0.01 };
     const total = real ? Math.max(60, Math.round(((haversineKm({ ...s.pickup, ...real }, s.pickup) * 1.3) / 25) * 3600)) : (cand?.etaMin ?? 3) * 60;
     let elapsed = 0;
@@ -113,6 +115,7 @@ const react = () => {
     if (s.useUberCash && wallet.balance > 0) {
       const used = Math.min(wallet.balance, total);
       wallet.spend(used, `Ride to ${s.destination.name}`);
+      useTripStore.setState({ walletPaid: used });
       useNoticeStore.getState().push({ kind: "ride", title: `₹${used.toFixed(2)} paid from Routiq Cash`, body: `Balance ₹${(wallet.balance - used).toFixed(2)}.` });
     }
     useHistoryStore.getState().add({

@@ -119,17 +119,42 @@ export const useCommuteStore = create<{ plans: CommutePlan[]; add: (p: Omit<Comm
 );
 
 export type DocKey = "licence" | "rc" | "insurance" | "police";
+export type DriverDetails = { city: string; make: string; colour: string; year: string; licenceNo: string; insuranceNo: string; policeNo: string };
+const NO_DETAILS: DriverDetails = { city: "", make: "", colour: "", year: "", licenceNo: "", insuranceNo: "", policeNo: "" };
 
-// Driver profile extras: payout details and which documents are uploaded and verified.
-export const useDriverStore = create<{ gender: "woman" | "man" | "na"; setGender: (g: "woman" | "man" | "na") => void; upi: string; docs: Record<DocKey, boolean>; setUpi: (v: string) => void; toggleDoc: (k: DocKey) => void }>()(
+// Driver profile extras: onboarding details, payout, which documents are uploaded, online switch and rider ratings given.
+export const useDriverStore = create<{
+  gender: "woman" | "man" | "na";
+  setGender: (g: "woman" | "man" | "na") => void;
+  upi: string;
+  docs: Record<DocKey, boolean>;
+  details: DriverDetails;
+  online: boolean;
+  /** stars this driver gave riders after trips */
+  riderRatings: number[];
+  setUpi: (v: string) => void;
+  toggleDoc: (k: DocKey) => void;
+  setDetails: (d: Partial<DriverDetails>) => void;
+  setOnline: (v: boolean) => void;
+  rateRider: (n: number) => void;
+  /** a new driver starts with nothing uploaded */
+  startOnboarding: () => void;
+}>()(
   persist(
     (set) => ({
       gender: "na",
       setGender: (gender) => set({ gender }),
       upi: "",
       docs: { licence: true, rc: true, insurance: false, police: true },
+      details: NO_DETAILS,
+      online: true,
+      riderRatings: [],
       setUpi: (upi) => set({ upi }),
       toggleDoc: (k) => set((s) => ({ docs: { ...s.docs, [k]: !s.docs[k] } })),
+      setDetails: (d) => set((s) => ({ details: { ...s.details, ...d } })),
+      setOnline: (online) => set({ online }),
+      rateRider: (n) => set((s) => ({ riderRatings: [...s.riderRatings, n] })),
+      startOnboarding: () => set({ docs: { licence: false, rc: false, insurance: false, police: false }, details: NO_DETAILS, upi: "", gender: "na", online: false }),
     }),
     { name: "routiq:driver", storage },
   ),

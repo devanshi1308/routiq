@@ -237,6 +237,16 @@ const Trip = () => {
               <View style={{ width: `${Math.max(10, totalDrivers ? (triedDrivers / totalDrivers) * 100 : 10)}%`, height: 4, backgroundColor: colors.blue }} />
             </View>
             {!noOneLeft && <T style={{ color: colors.muted, fontSize: 13, marginTop: 8 }}>{triedDrivers} of {totalDrivers} drivers didn't accept yet</T>}
+            {noOneLeft && (
+              <Button
+                title="Search again"
+                onPress={() => {
+                  useTripStore.setState({ batchNo: 0, requestId: `req-${Date.now().toString(36)}` });
+                  push({ kind: "ride", title: "Searching again", body: "We are asking the drivers near you once more." });
+                }}
+                style={{ marginTop: 14, height: 48 }}
+              />
+            )}
 
             {detailsCard}
 
@@ -244,8 +254,8 @@ const Trip = () => {
               <T style={{ fontFamily: font.bold, fontSize: 16 }}>Increase your chances by adding extra</T>
               <Row style={{ gap: 8, marginTop: 12 }}>
                 {[20, 30, 40].map((n) => (
-                  <Pressable key={n} onPress={() => setPending(pending === n ? 0 : n)} style={{ flex: 1, height: 44, borderRadius: 22, backgroundColor: pending === n ? "#000" : colors.card, alignItems: "center", justifyContent: "center" }}>
-                    <T style={{ fontFamily: font.bold, fontSize: 14, color: pending === n ? "#fff" : "#000" }}>+₹{n}</T>
+                  <Pressable key={n} onPress={() => setPending(pending === n ? 0 : n)} style={{ flex: 1, height: 44, borderRadius: 22, backgroundColor: pending === n ? colors.ink : colors.card, alignItems: "center", justifyContent: "center" }}>
+                    <T style={{ fontFamily: font.bold, fontSize: 14, color: pending === n ? colors.onInk : colors.text }}>+₹{n}</T>
                   </Pressable>
                 ))}
               </Row>
@@ -415,8 +425,8 @@ const Trip = () => {
             <T style={{ color: colors.muted, marginTop: 2 }}>We'll deliver your tip after the ride.</T>
             <Row style={{ gap: 8, marginTop: 12 }}>
               {TIPS.map((n) => (
-                <Pressable key={n} onPress={() => useTripStore.setState({ tip: n })} style={{ flex: 1, height: 44, borderRadius: 22, borderWidth: 1.5, borderColor: tip === n ? "#000" : colors.border, backgroundColor: tip === n ? "#000" : "#fff", alignItems: "center", justifyContent: "center" }}>
-                  <T style={{ fontFamily: font.bold, fontSize: 14, color: tip === n ? "#fff" : "#000" }}>{n === 0 ? "No tip" : `₹${n}`}</T>
+                <Pressable key={n} onPress={() => useTripStore.setState({ tip: n })} style={{ flex: 1, height: 44, borderRadius: 22, borderWidth: 1.5, borderColor: tip === n ? colors.ink : colors.border, backgroundColor: tip === n ? colors.ink : colors.card, alignItems: "center", justifyContent: "center" }}>
+                  <T style={{ fontFamily: font.bold, fontSize: 14, color: tip === n ? colors.onInk : colors.text }}>{n === 0 ? "No tip" : `₹${n}`}</T>
                 </Pressable>
               ))}
             </Row>
@@ -517,7 +527,6 @@ const Trip = () => {
                   <T style={{ fontFamily: font.semi, fontSize: 16 }} numberOfLines={2}>{x.t}</T>
                   {!!x.sub && <T style={{ color: colors.muted, fontSize: 13 }}>{x.sub}</T>}
                 </View>
-                <Ionicons name={x.r as any} size={18} color={colors.muted} />
               </Row>
             ))}
             <Row style={{ gap: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>

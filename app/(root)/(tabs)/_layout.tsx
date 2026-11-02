@@ -1,5 +1,5 @@
 import Ionicons from "@/components/Icon";
-import { Tabs } from "expo-router";
+import { Tabs, router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -39,15 +39,25 @@ const PillTabBar = ({ state, descriptors, navigation }: any) => {
       {state.routes.map((route: any, i: number) => {
         const { options } = descriptors[route.key];
         const focused = state.index === i;
-        const color = focused ? "#000" : colors.muted;
+        const color = focused ? colors.text : colors.muted;
         const onPress = () => {
-          const e = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-          if (!focused && !e.defaultPrevented) navigation.navigate(route.name, route.params);
+          // Tell the navigator a tab was pressed (so other code can react), then always go to the tab by its path.
+          // Going by path works on every Expo Router version; calling navigation.navigate directly stopped working on some.
+          try {
+            const nav = navigation ?? descriptors[route.key]?.navigation;
+            const e = nav?.emit?.({ type: "tabPress", target: route.key, canPreventDefault: true });
+            if (e?.defaultPrevented) return;
+          } catch {}
+          if (focused) return;
+          router.navigate(`/(root)/(tabs)/${route.name}` as any);
         };
         return (
           <Pressable
             key={route.key}
             onPress={onPress}
+            accessibilityRole="tab"
+            accessibilityLabel={options.title}
+            hitSlop={{ top: 8, bottom: 8 }}
             style={{ flex: 1, height: 60, borderRadius: 30, alignItems: "center", justifyContent: "center", backgroundColor: focused ? colors.card : "transparent" }}
           >
             {options.tabBarIcon?.({ focused, color, size: 24 })}

@@ -62,7 +62,7 @@ const Inbox = () => {
         {items.map((i) => (
           <Row key={i.id} style={{ alignItems: "flex-start", gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
             <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: i.icon === "pricetag" ? "#FDE5E0" : colors.card, alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name={`${i.icon}-outline` as any} size={20} color={i.icon === "pricetag" ? colors.promo : "#000"} />
+              <Ionicons name={`${i.icon}-outline` as any} size={20} color={i.icon === "pricetag" ? colors.promo : colors.text} />
             </View>
             <View style={{ flex: 1 }}>
               <T style={{ fontFamily: font.bold, fontSize: 20 }}>{i.title}</T>

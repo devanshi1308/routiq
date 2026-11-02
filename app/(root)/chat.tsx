@@ -63,8 +63,8 @@ const Chat = () => {
           <T style={{ textAlign: "center", color: colors.muted, fontSize: 12, marginBottom: 6 }}>Messages are only visible during this trip</T>
           {messages.map((m) => (
             <View key={m.id} style={{ alignSelf: m.from === "rider" ? "flex-end" : "flex-start", maxWidth: "78%" }}>
-              <View style={{ backgroundColor: m.from === "rider" ? "#000" : colors.card, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 }}>
-                <T style={{ color: m.from === "rider" ? "#fff" : "#000", fontFamily: font.medium, fontSize: 16 }}>{m.text}</T>
+              <View style={{ backgroundColor: m.from === "rider" ? colors.ink : colors.card, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 }}>
+                <T style={{ color: m.from === "rider" ? colors.onInk : colors.text, fontFamily: font.medium, fontSize: 16 }}>{m.text}</T>
               </View>
               <T style={{ fontSize: 11, color: colors.muted, marginTop: 2, alignSelf: m.from === "rider" ? "flex-end" : "flex-start" }}>{m.time}</T>
             </View>
@@ -92,7 +92,7 @@ const Chat = () => {
             returnKeyType="send"
             style={{ color: colors.text, flex: 1, height: 48, borderRadius: 24, backgroundColor: colors.card, paddingHorizontal: 18, fontSize: 16, fontFamily: font.medium, ...noOutline } as any}
           />
-          <Pressable onPress={() => submit(text)} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: text.trim() ? "#000" : "#bbb", alignItems: "center", justifyContent: "center" }}>
+          <Pressable onPress={() => submit(text)} style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: text.trim() ? colors.ink : colors.muted, alignItems: "center", justifyContent: "center" }}>
             <Ionicons name="arrow-up" size={22} color={colors.onInk} />
           </Pressable>
         </Row>

@@ -41,7 +41,7 @@ const Account = () => {
     { t: "Notifications", d: "Choose which reminders you get", e: "gift", to: "/(root)/notifications" },
     { t: "Daily commute", d: "Repeat your office ride every day", e: "calendar", to: "/(root)/commute" },
     { t: "You have multiple promos", d: "We'll automatically apply the one that saves you the most", e: "tag", to: "/(root)/promo" },
-    { t: "Bike Flex Pass", d: "Save 30% on Bike rides", e: "bike" },
+    { t: "Bike Flex Pass", d: "Save 30% on Bike rides", e: "bike", to: "/(root)/where-to", bike: true },
     { t: "Save with Routiq One", d: "Get rewards for 1 month at 20% off", e: "gift", to: "/(root)/routiq-one" },
     { t: "Rider insurance", d: "₹10L cover for ₹3/trip", e: "umbrella", to: "/(root)/safety-info?kind=routiq" },
   ];
@@ -79,7 +79,10 @@ const Account = () => {
         </Pressable>
 
         {cards.map((c) => (
-          <Pressable key={c.t} onPress={() => router.push(("to" in c ? c.to : "/(root)/promo") as any)} style={{ backgroundColor: colors.card, borderRadius: 20, padding: 22, marginTop: 14, flexDirection: "row", alignItems: "center", minHeight: 112 }}>
+          <Pressable key={c.t} onPress={() => {
+            if ("bike" in c) useTripStore.getState().setPreferred("bike");
+            router.push(("to" in c ? c.to : "/(root)/promo") as any);
+          }} style={{ backgroundColor: colors.card, borderRadius: 20, padding: 22, marginTop: 14, flexDirection: "row", alignItems: "center", minHeight: 112 }}>
             <View style={{ flex: 1 }}>
               <T style={{ fontFamily: font.bold, fontSize: 22 }}>{c.t}</T>
               <T style={{ fontFamily: font.medium, fontSize: 17, color: colors.muted, marginTop: 6 }}>{c.d}</T>

@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Button, Header, Row, T } from "@/components/ui";
+import { Button, Field, Header, Row, T } from "@/components/ui";
 import { colors, font } from "@/constants/theme";
 import { useIntegrity } from "@/lib/integrity";
 import { useAuthStore } from "@/store";
@@ -14,6 +14,11 @@ const TABS = ["Home", "Personal info", "Security", "Privacy & Data"];
 const UberAccount = () => {
   const { name, phone, email, signOut } = useAuthStore();
   const [tab, setTab] = useState("Home");
+  const [editing, setEditing] = useState(false);
+  const [n, setN] = useState(name);
+  const [em, setEm] = useState(email);
+  const [saved, setSaved] = useState("");
+  const emailOk = !em.trim() || /\S+@\S+\.\S+/.test(em.trim());
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header title="Routiq Account" />
@@ -66,12 +71,29 @@ const UberAccount = () => {
         )}
         {tab === "Personal info" && (
           <>
-            {[["Name", name], ["Phone number", `+91 ${phone || "98XXXXXX21"}`], ["Email", email || "—"]].map(([k, v]) => (
-              <View key={k} style={{ paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                <T style={{ color: colors.muted }}>{k}</T>
-                <T style={{ fontFamily: font.bold, fontSize: 18, marginTop: 2 }}>{v}</T>
-              </View>
-            ))}
+            {!editing ? (
+              <>
+                {[["Name", name], ["Phone number", `+91 ${phone || "98XXXXXX21"}`], ["Email", email || "Not added"]].map(([k, v]) => (
+                  <View key={k} style={{ paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                    <T style={{ color: colors.muted }}>{k}</T>
+                    <T style={{ fontFamily: font.bold, fontSize: 18, marginTop: 2 }}>{v}</T>
+                  </View>
+                ))}
+                {!!saved && <T style={{ color: colors.green, fontFamily: font.semi, marginTop: 14 }}>{saved}</T>}
+                <Button title="Edit" variant="grey" onPress={() => { setN(name); setEm(email); setSaved(""); setEditing(true); }} style={{ marginTop: 18 }} />
+              </>
+            ) : (
+              <>
+                <T style={{ color: colors.muted, marginBottom: 6 }}>Name</T>
+                <Field value={n} onChangeText={setN} placeholder="Your name" />
+                <T style={{ color: colors.muted, marginTop: 14, marginBottom: 6 }}>Email</T>
+                <Field value={em} onChangeText={setEm} placeholder="name@example.com" autoCapitalize="none" keyboardType="email-address" />
+                {!emailOk && <T style={{ color: colors.red, fontSize: 13, marginTop: 6 }}>Enter a valid email address.</T>}
+                <T style={{ color: colors.muted, fontSize: 12, marginTop: 10 }}>Your phone number is your login, so it can't be changed here.</T>
+                <Button title="Save" disabled={!n.trim() || !emailOk} onPress={() => { useAuthStore.setState({ name: n.trim(), email: em.trim() }); setEditing(false); setSaved("Saved."); }} style={{ marginTop: 18 }} />
+                <Button title="Cancel" variant="grey" onPress={() => setEditing(false)} style={{ marginTop: 10 }} />
+              </>
+            )}
           </>
         )}
         {tab === "Security" && ["Passkeys", "Login with Google", "2-step verification", "Connected apps"].map((k) => (
