@@ -44,13 +44,14 @@ export const useSafetyStore = create<{
 export type Txn = { id: string; text: string; amount: number; at: string };
 
 // Routiq Cash balance and its history.
-export const useWalletStore = create<{ balance: number; txns: Txn[]; member: boolean; setMember: (v: boolean) => void; spend: (amount: number, text: string) => void; addCash: (amount: number, via: string) => void }>()(
+export const useWalletStore = create<{ balance: number; txns: Txn[]; member: boolean; renews: string; setMember: (v: boolean, renews?: string) => void; spend: (amount: number, text: string) => void; addCash: (amount: number, via: string) => void }>()(
   persist(
     (set) => ({
       balance: 0,
       txns: [],
       member: false,
-      setMember: (member) => set({ member }),
+      renews: "",
+      setMember: (member, renews = "") => set({ member, renews: member ? renews : "" }),
       spend: (amount, text) =>
         set((s) => ({
           balance: +(s.balance - amount).toFixed(2),
