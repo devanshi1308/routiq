@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { Linking, Platform, ScrollView, View } from "react-native";
 
 import { T } from "@/components/ui";
 import { colors, font } from "@/constants/theme";
@@ -33,6 +33,15 @@ export default function SharedRide() {
             {line("Trip", c.km ? `${c.km.toFixed(1)} km · about ${c.minutes} min` : undefined)}
             {line("Fare", c.fare ? `₹${c.fare}` : undefined)}
           </View>
+          {!!c.live && (
+            <>
+              <T style={{ fontFamily: font.bold, fontSize: 18, marginTop: 22 }}>Live location</T>
+              {Platform.OS === "web" ? (
+                <iframe src={c.live} title="Live ride map" style={{ width: "100%", height: 480, border: 0, borderRadius: 16, marginTop: 10 }} />
+              ) : null}
+              <T onPress={() => Linking.openURL(c.live!)} style={{ color: colors.blue, fontFamily: font.semi, marginTop: 12 }}>Open the live map</T>
+            </>
+          )}
         </>
       )}
     </ScrollView>

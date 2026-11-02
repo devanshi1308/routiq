@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 
+import { trackLink } from "@/lib/tripShare";
 import { useAuthStore, useTripStore } from "@/store";
 
 // A link that carries the ride details inside it, so anyone can open it on the hosted app with no tracking server running.
@@ -15,6 +16,8 @@ export type RideCard = {
   km?: number;
   minutes?: number;
   at: number;
+  /** live tracking page for this ride, shown on the details page */
+  live?: string;
 };
 
 const enc = (s: string) => encodeURIComponent(s);
@@ -40,6 +43,7 @@ export const currentRideCard = (): RideCard => {
     km: route?.km,
     minutes: route?.minutes,
     at: Date.now(),
+    live: t.requestId ? trackLink(t.requestId) : undefined,
   };
 };
 
