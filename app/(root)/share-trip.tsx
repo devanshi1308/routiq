@@ -9,6 +9,7 @@ import { colors, font } from "@/constants/theme";
 import { useTripStore } from "@/store";
 import { useSafetyStore } from "@/store/extras";
 import { pushSnapshot, trackLink, useShareStore } from "@/lib/tripShare";
+import { currentRideCard, rideLink } from "@/lib/rideLink";
 
 // Share a live link with the trip details and where the vehicle is right now.
 const ShareTrip = () => {
@@ -20,6 +21,7 @@ const ShareTrip = () => {
   const [reachable, setReachable] = useState<boolean | null>(null);
   const id = requestId || "pending";
   const link = trackLink(id);
+  const detailsLink = rideLink(currentRideCard());
 
   // opening this page starts live sharing for the current trip
   useEffect(() => {
@@ -34,6 +36,7 @@ const ShareTrip = () => {
     `From: ${pickup.name}`,
     destination ? `To: ${destination.name}` : "",
     `Status: ${where}`,
+    `Ride details: ${detailsLink}`,
     `Follow my ride live (map, route and arrival time): ${link}`,
     `Trip ID: ${requestId || "pending"}`,
   ].filter(Boolean).join("\n");
