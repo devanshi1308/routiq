@@ -17,6 +17,14 @@ const NUDGES: [string, string][] = [
   ["your favourite driver is online 💛", "ask for them first next time. they'd like that."],
   ["late ho rahe ho?", "tell us where. we'll tell the auto. ⏱️"],
   ["pssst. 🛵", "a bike gets you there before your chai gets cold."],
+  ["chai ya cab? ☕", "why not both. we'll bring the ride, you bring the chai."],
+  ["friday feeling 🎉", "going out? split the fare with friends in one tap."],
+  ["office jaana hai? 💼", "set up your daily commute once. we'll remind you every morning."],
+  ["late night ho gayi? 🌙", "ride home safe and tell your people you reached. we'll help."],
+  ["weekend plans? 🛺", "autos are cheaper than that parking ticket. just saying."],
+  ["your people are waiting 💛", "share your ride live so they know exactly when you'll arrive."],
+  ["bheed se bacho 🚦", "carpool with people going your way. pay about 35% less."],
+  ["quick one 👀", "an offer is waiting in your inbox. check the price before you ride."],
 ];
 const COMMUTE: [string, string][] = [
   ["your {time} commute is calling 📞", "{label}. one tap and a driver is on the way."],
@@ -72,13 +80,20 @@ export const rescheduleAll = async () => {
     }
   }
   if (nudges) {
-    // one nudge on each of the next three "every other day" slots, at 6:30pm
-    for (const days of [1, 3, 5]) {
-      const at = new Date();
-      at.setDate(at.getDate() + days);
-      at.setHours(18, 30, 0, 0);
-      const [title, body] = pick(NUDGES);
-      await Notifications.scheduleNotificationAsync({ content: { title, body }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at } });
+    // how often: low = every other day evening, normal = every evening, high = morning and evening for a week
+    const { freq } = useNotifyStore.getState();
+    const days = freq === "low" ? [1, 3, 5] : [1, 2, 3, 4, 5, 6, 7];
+    const hours: [number, number][] = freq === "high" ? [[9, 30], [18, 30]] : [[18, 30]];
+    const bank = [...NUDGES].sort(() => Math.random() - 0.5); // a different line each time, none repeated in a row
+    let n = 0;
+    for (const d of days) {
+      for (const [h, m] of hours) {
+        const at = new Date();
+        at.setDate(at.getDate() + d);
+        at.setHours(h, m, 0, 0);
+        const [title, body] = bank[n++ % bank.length];
+        await Notifications.scheduleNotificationAsync({ content: { title, body }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at } });
+      }
     }
   }
 };

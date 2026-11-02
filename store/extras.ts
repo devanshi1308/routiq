@@ -161,12 +161,15 @@ export const useDriverStore = create<{
 );
 
 // Which phone notifications the rider allows.
-export const useNotifyStore = create<{ rides: boolean; commute: boolean; nudges: boolean; set: (k: "rides" | "commute" | "nudges", v: boolean) => void }>()(
+export type Freq = "low" | "normal" | "high";
+export const useNotifyStore = create<{ rides: boolean; commute: boolean; nudges: boolean; freq: Freq; setFreq: (f: Freq) => void; set: (k: "rides" | "commute" | "nudges", v: boolean) => void }>()(
   persist(
     (set) => ({
       rides: true,
       commute: true,
       nudges: true,
+      freq: "high",
+      setFreq: (freq) => set({ freq }),
       set: (k, v) => set({ [k]: v } as any),
     }),
     { name: "routiq:notify", storage },
