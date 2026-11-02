@@ -3,7 +3,7 @@ import { AppState, Platform } from "react-native";
 
 import { maskPlate, shortName } from "@/lib/privacy";
 import { useNoticeStore, useTripStore } from "@/store";
-import { useCommuteStore, useNotifyStore } from "@/store/extras";
+import { useCommuteStore, useNotifyStore, useScheduledStore } from "@/store/extras";
 
 // Friendly, a little cheeky phone notifications about rides. All are local: they are scheduled on the phone,
 // so they work with no server. Rules: at most one nudge every two days, never during quiet hours (10pm to 8am),
@@ -61,10 +61,23 @@ export const sendTest = async () => {
   return sendNow(t, b);
 };
 
+/** A reminder 10 minutes before a ride booked for later. */
+export const scheduleRideReminder = async (id: string, when: number, where: string) => {
+  if (!supported || !(await askNotifyPermission())) return;
+  const at = new Date(Math.max(Date.now() + 5000, when - 10 * 60000));
+  await Notifications.scheduleNotificationAsync({
+    identifier: `ride-${id}`,
+    content: { title: "your ride is almost due 🚕", body: `Pickup at ${new Date(when).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }).toUpperCase()}. Open Routiq and tap Start to find a driver to ${where}.` },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at },
+  });
+};
+export const cancelRideReminder = (id: string) => (supported ? Notifications.cancelScheduledNotificationAsync(`ride-${id}`).catch(() => {}) : undefined);
+
 /** Cancels everything scheduled and schedules it again from the current settings. */
 export const rescheduleAll = async () => {
   if (!supported || !(await Notifications.getPermissionsAsync()).granted) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
+  for (const r of useScheduledStore.getState().rides) await scheduleRideReminder(r.id, r.when, r.dest.name); // keep reminders for rides booked for later
   const { commute, nudges } = useNotifyStore.getState();
 
   if (commute) {

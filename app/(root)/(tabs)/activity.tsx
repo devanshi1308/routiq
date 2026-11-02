@@ -10,12 +10,27 @@ import { H1, H2, Row, T } from "@/components/ui";
 import { colors, font } from "@/constants/theme";
 import { CURRENT_LOCATION, PLACES } from "@/lib/mock";
 import { useHistoryStore } from "@/store";
-import { useCommuteStore } from "@/store/extras";
+import { whenText } from "@/components/SchedulePicker";
+import { cancelRideReminder } from "@/lib/notify";
+import { OFFERS } from "@/lib/offers";
+import { useTripStore } from "@/store";
+import { ScheduledRide, useCommuteStore, useScheduledStore } from "@/store/extras";
 
 const Activity = () => {
   const all = useHistoryStore((s) => s.rides);
   const [filter, setFilter] = useState("All");
   const commutes = useCommuteStore((c) => c.plans).filter((p) => p.on);
+  const later = useScheduledStore((x) => x.rides);
+  const startNow = (r: ScheduledRide) => {
+    const t = useTripStore.getState();
+    t.setPreferred(r.rideId);
+    t.setPickup({ id: "sched-from", ...r.pickup });
+    t.setDestination({ id: "sched-to", ...r.dest });
+    useTripStore.setState({ schedule: null, offer: OFFERS.reserve });
+    cancelRideReminder(r.id);
+    useScheduledStore.getState().remove(r.id);
+    router.push("/(root)/choose-ride");
+  };
   const [showFilter, setShowFilter] = useState(false);
   const rides = all.filter((r) => filter === "All" || (filter === "Business" ? r.business : r.status.toLowerCase() === filter.toLowerCase()));
   return (
@@ -23,6 +38,27 @@ const Activity = () => {
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 28 }}>
         <H1 style={{ marginTop: 16 }}>Activity</H1>
         <H2 style={{ fontSize: 26, marginTop: 28, marginBottom: 14 }}>Upcoming</H2>
+        {later.map((r) => (
+          <View key={r.id} style={[card, { marginBottom: 12, flexDirection: "column", alignItems: "stretch" }]}>
+            <Row style={{ justifyContent: "space-between" }}>
+              <T style={{ fontFamily: font.bold, fontSize: 18 }}>{whenText(r.when)}</T>
+              <View style={{ alignItems: "flex-end" }}>
+                <T style={{ color: colors.muted, textDecorationLine: "line-through", fontSize: 12 }}>₹{r.before.toFixed(0)}</T>
+                <T style={{ fontFamily: font.extra, color: colors.green }}>₹{r.price.toFixed(0)}</T>
+              </View>
+            </Row>
+            <T style={{ color: colors.muted, marginTop: 4 }} numberOfLines={1}>{r.rideName} · {r.pickup.name} to {r.dest.name}</T>
+            {!!r.label && <T style={{ color: colors.green, fontFamily: font.semi, fontSize: 12, marginTop: 2 }}>{r.label}</T>}
+            <Row style={{ gap: 10, marginTop: 12 }}>
+              <Pressable accessibilityRole="button" onPress={() => startNow(r)} style={{ flex: 1.4, height: 44, borderRadius: 12, backgroundColor: colors.ink, alignItems: "center", justifyContent: "center" }}>
+                <T style={{ color: colors.onInk, fontFamily: font.bold }}>Start now</T>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={() => { cancelRideReminder(r.id); useScheduledStore.getState().remove(r.id); }} style={{ flex: 1, height: 44, borderRadius: 12, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" }}>
+                <T style={{ fontFamily: font.bold }}>Cancel</T>
+              </Pressable>
+            </Row>
+          </View>
+        ))}
         {commutes.map((p) => (
           <Pressable key={p.id} onPress={() => router.push("/(root)/commute" as any)} style={[card, { marginBottom: 12 }]}>
             <View style={{ flex: 1 }}>
@@ -34,7 +70,7 @@ const Activity = () => {
         ))}
         <Pressable onPress={() => router.push((commutes.length ? "/(root)/where-to" : "/(root)/commute") as any)} style={card}>
           <View style={{ flex: 1 }}>
-            <T style={{ fontFamily: font.bold, fontSize: 26, lineHeight: 32 }}>{commutes.length ? "Need another ride?" : "You have no upcoming trips"}</T>
+            <T style={{ fontFamily: font.bold, fontSize: 26, lineHeight: 32 }}>{commutes.length || later.length ? "Need another ride?" : "You have no upcoming trips"}</T>
             <T style={{ fontFamily: font.semi, fontSize: 18, color: colors.muted, marginTop: 8 }}>{commutes.length ? "Plan a ride →" : "Set up a daily commute →"}</T>
           </View>
           <Vehicle kind="calendar" size={70} />

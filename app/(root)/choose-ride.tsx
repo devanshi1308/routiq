@@ -12,7 +12,10 @@ import { BATCH_SIZE, Dispatch, findNearby, kindFor, simulateFleet } from "@/lib/
 import { isLand } from "@/lib/land";
 import { snapToRoad } from "@/lib/snap";
 import { servesRide } from "@/lib/fleet";
-import { askNotifyPermission } from "@/lib/notify";
+import { askNotifyPermission, scheduleRideReminder } from "@/lib/notify";
+import { OFFERS } from "@/lib/offers";
+import { whenText } from "@/components/SchedulePicker";
+import { useScheduledStore } from "@/store/extras";
 import { shortName } from "@/lib/privacy";
 import { useFavStore, useSafetyStore } from "@/store/extras";
 import { startFlushing, track, useAnalytics } from "@/lib/analytics";
@@ -59,6 +62,7 @@ const RideMap = ({ pickup, destination, routes, routeIndex, height, etaLabel, se
 
 const ChooseRide = () => {
   const offer = useTripStore((t) => t.offer);
+  const schedule = useTripStore((t) => t.schedule);
   const { preferred, voucher, pickup, destination, routes, routeIndex, setRoutes, setRouteIndex, rideType, selectRide, payment, setPayment, setFare, setStatus } = useTripStore();
   const [showRoutes, setShowRoutes] = useState(false);
   const [chosen, setChosen] = useState(false);
@@ -117,7 +121,9 @@ const ChooseRide = () => {
   // discount for one ride: carpool has its shared-fare saving, others get the bigger of the voucher and the tapped offer
   const discount = (r: (typeof RIDE_TYPES)[number]): { pct: number; label: string } => {
     if (r.id === "pool") return pool.length ? { pct: 35, label: "Carpool · 35% off" } : { pct: 20, label: "Carpool · 20% off" };
-    const o = offer && (!offer.rideId || offer.rideId === r.id) ? offer : null;
+    const tile = offer && (!offer.rideId || offer.rideId === r.id) ? offer : null;
+    const later = schedule ? OFFERS.reserve : null; // a ride booked for later gets the Reserve offer
+    const o = tile && later ? (tile.pct >= later.pct ? tile : later) : tile ?? later;
     if (o && (!voucher || o.pct > 10)) return { pct: o.pct, label: o.label };
     if (voucher) return { pct: 10, label: `${voucher} · 10% off` };
     return { pct: 0, label: "" };
@@ -128,6 +134,17 @@ const ChooseRide = () => {
   const standard = RIDE_TYPES.filter((r) => r.id !== "pool");
   const cheapestId = route ? standard.reduce((b, r) => (priceOf(r) < priceOf(b) ? r : b)).id : "";
   const fastestId = standard.reduce((b, r) => (etaOf(r.id, r.etaMin) < etaOf(b.id, b.etaMin) ? r : b)).id;
+
+  // book for later: save it, remind 10 minutes before, and go to Activity where "Start now" begins the driver search
+  const bookLater = () => {
+    if (!route || !destination || !schedule) return;
+    const pl = (p: typeof pickup) => ({ name: p.name, address: p.address, latitude: p.latitude, longitude: p.longitude });
+    const id = useScheduledStore.getState().add({ when: schedule, pickup: pl(pickup), dest: pl(destination), rideId: selected.id, rideName: selected.name, price: +priceOf(selected).toFixed(2), before: +priceOf(selected, false).toFixed(2), label: discount(selected).label });
+    scheduleRideReminder(id, schedule, destination.name);
+    push({ kind: "ride", title: "Ride scheduled", body: `${selected.name} to ${destination.name}, ${whenText(schedule)}. We will remind you 10 minutes before.` });
+    useTripStore.getState().reset();
+    router.replace("/(root)/(tabs)/activity" as any);
+  };
 
   const book = () => {
     if (!route) return;
@@ -293,7 +310,7 @@ const ChooseRide = () => {
           {womenOnly && disp.candidates.length === 0 && (
             <Button title="Show all drivers instead" variant="outline" onPress={() => useTripStore.setState({ womenOnly: false })} />
           )}
-          <Button title={womenOnly && disp.candidates.length === 0 ? "No women drivers nearby" : `Choose ${selected.name}`} disabled={womenOnly && disp.candidates.length === 0} onPress={book} />
+          <Button title={womenOnly && disp.candidates.length === 0 ? "No women drivers nearby" : schedule ? `Schedule ${selected.name} · ${whenText(schedule)}` : `Choose ${selected.name}`} disabled={womenOnly && disp.candidates.length === 0} onPress={schedule ? bookLater : book} />
         </View>
       </View>
     </View>

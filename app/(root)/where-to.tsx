@@ -5,6 +5,7 @@ import { Platform } from "react-native";
 import { Pressable, ScrollView, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import SchedulePicker, { whenText } from "@/components/SchedulePicker";
 import { Row, T, noOutline } from "@/components/ui";
 import { colors, font } from "@/constants/theme";
 import { useAnalytics } from "@/lib/analytics";
@@ -53,9 +54,9 @@ const WhereTo = () => {
   const [online, setOnline] = useState<Place[]>([]);
   const [saving, setSaving] = useState<"home" | "work" | null>(null);
   const [showSaved, setShowSaved] = useState(false);
-  const [when, setWhen] = useState(0);
+  const [pickTime, setPickTime] = useState(false);
+  const schedule = useTripStore((t) => t.schedule);
   const [who, setWho] = useState(0);
-  const WHEN = ["Pickup now", "Pickup in 30 min", "Pickup in 1 hour"];
   const WHO = ["For me", "For someone else"];
 
   const recents = recentFrom(rides, 3);
@@ -119,6 +120,7 @@ const WhereTo = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+      <SchedulePicker visible={pickTime} value={schedule} onPick={(ts) => { useTripStore.setState({ schedule: ts }); setPickTime(false); }} onClose={() => setPickTime(false)} />
       <Row style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 6, justifyContent: "center" }}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={{ position: "absolute", left: 16 }}>
           <Ionicons name="arrow-back" size={26} />
@@ -128,9 +130,9 @@ const WhereTo = () => {
 
       {offerOn && <T style={{ marginHorizontal: 20, marginTop: 10, color: colors.green, fontFamily: font.bold, fontSize: 14 }}>{offerOn.label} will be applied to your ride</T>}
       <Row style={{ gap: 10, paddingHorizontal: 20, marginTop: 10 }}>
-        <Row onPress={() => setWhen((when + 1) % WHEN.length)} style={{ gap: 6, borderWidth: 1, borderColor: colors.border, borderRadius: 20, height: 38, paddingHorizontal: 14 }}>
+        <Row onPress={() => setPickTime(true)} style={{ gap: 6, borderWidth: 1, borderColor: colors.border, borderRadius: 20, height: 38, paddingHorizontal: 14 }}>
           <Ionicons name="time-outline" size={16} />
-          <T style={{ fontFamily: font.semi, fontSize: 14 }}>{WHEN[when]}</T>
+          <T style={{ fontFamily: font.semi, fontSize: 14 }}>{whenText(schedule)}</T>
           <Ionicons name="chevron-down" size={14} />
         </Row>
         <Row onPress={() => setWho((who + 1) % WHO.length)} style={{ gap: 6, borderWidth: 1, borderColor: colors.border, borderRadius: 20, height: 38, paddingHorizontal: 14 }}>

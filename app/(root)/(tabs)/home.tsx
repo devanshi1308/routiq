@@ -13,7 +13,8 @@ import { OFFERS } from "@/lib/offers";
 import { fmtVisits, popularNear } from "@/lib/popular";
 import { Place, recentFrom, SERVICE_RIDE, SERVICES } from "@/lib/mock";
 import { useAuthStore, useHistoryStore, useTripStore } from "@/store";
-import { useCommuteStore, useFavStore } from "@/store/extras";
+import { cancelRideReminder } from "@/lib/notify";
+import { ScheduledRide, useCommuteStore, useFavStore, useScheduledStore } from "@/store/extras";
 
 const BADGES: Record<string, string> = { trip: "25%", reserve: "20%", carpool: "35%" };
 const FOR_YOU = ["auto", "trip", "bike", "carpool", "reserve"];
@@ -52,6 +53,19 @@ const Home = () => {
     useTripStore.setState({ favDriver: due.favourite ? favs.find((f) => f.rideId === due.rideId)?.id ?? favs[0]?.id ?? null : null });
     router.push("/(root)/choose-ride");
   };
+  // a ride booked for later that is due within 15 minutes
+  const laterRides = useScheduledStore((x) => x.rides);
+  const dueLater = laterRides.find((r) => r.when - Date.now() <= 15 * 60000);
+  const startLater = (r: ScheduledRide) => {
+    const t = useTripStore.getState();
+    t.setPreferred(r.rideId);
+    t.setPickup({ id: "sched-from", ...r.pickup });
+    t.setDestination({ id: "sched-to", ...r.dest });
+    useTripStore.setState({ schedule: null, offer: OFFERS.reserve });
+    cancelRideReminder(r.id);
+    useScheduledStore.getState().remove(r.id);
+    router.push("/(root)/choose-ride");
+  };
   const [loading, setLoading] = useState(true);
   const [locState, setLocState] = useState<LocationState>("locating");
 
@@ -80,7 +94,7 @@ const Home = () => {
   const go = (p: Place) => {
     track("shortcut_clicked", { place_id: p.id });
     setPreferred(null);
-    useTripStore.setState({ offer: null });
+    useTripStore.setState({ offer: null, schedule: null });
     useAnalytics.getState().setSource("shortcut");
     setDestination(p);
     router.push("/(root)/choose-ride");
@@ -90,7 +104,7 @@ const Home = () => {
   const openService = (id: string) => {
     if (id === "carpool") return router.push("/(root)/carpool" as any);
     setPreferred(SERVICE_RIDE[id] ?? null);
-    useTripStore.setState({ offer: OFFERS[id] ?? null });
+    useTripStore.setState({ offer: OFFERS[id] ?? null, schedule: null });
     useAnalytics.getState().setSource("search");
     router.push("/(root)/where-to");
   };
@@ -109,6 +123,17 @@ const Home = () => {
             <T style={{ fontFamily: font.medium, fontSize: 17 }}>Inbox</T>
           </Row>
         </Row>
+
+        {dueLater && tripStatus === "idle" && (
+          <Pressable accessibilityRole="button" onPress={() => startLater(dueLater)} style={{ marginHorizontal: 20, marginTop: 14, backgroundColor: colors.ink, borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <Ionicons name="alarm" size={24} color={colors.onInk} />
+            <View style={{ flex: 1 }}>
+              <T style={{ fontFamily: font.bold, color: colors.onInk }}>Your ride is almost due</T>
+              <T style={{ color: colors.onInk, opacity: 0.8, fontSize: 13 }} numberOfLines={1}>{dueLater.rideName} to {dueLater.dest.name}</T>
+            </View>
+            <T style={{ fontFamily: font.bold, color: colors.onInk }}>Start</T>
+          </Pressable>
+        )}
 
         {due && tripStatus === "idle" && (
           <Pressable accessibilityRole="button" onPress={bookCommute} style={{ marginHorizontal: 20, marginTop: 14, backgroundColor: colors.card, borderRadius: 16, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}>

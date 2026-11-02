@@ -176,3 +176,31 @@ export const useNotifyStore = create<{ rides: boolean; commute: boolean; nudges:
     { name: "routiq:notify", storage },
   ),
 );
+
+export type ScheduledRide = {
+  id: string;
+  when: number; // pickup time (ms since 1970)
+  pickup: { name: string; address: string; latitude: number; longitude: number };
+  dest: { name: string; address: string; latitude: number; longitude: number };
+  rideId: string;
+  rideName: string;
+  price: number;
+  before: number;
+  label: string; // the offer that was applied
+};
+
+// Rides booked for later. A reminder is sent shortly before, and "Start now" begins the driver search.
+export const useScheduledStore = create<{ rides: ScheduledRide[]; add: (r: Omit<ScheduledRide, "id">) => string; remove: (id: string) => void }>()(
+  persist(
+    (set) => ({
+      rides: [],
+      add: (r) => {
+        const id = String(Date.now());
+        set((s) => ({ rides: [...s.rides, { ...r, id }].sort((a, b) => a.when - b.when) }));
+        return id;
+      },
+      remove: (id) => set((s) => ({ rides: s.rides.filter((x) => x.id !== id) })),
+    }),
+    { name: "routiq:scheduled", storage },
+  ),
+);
