@@ -49,8 +49,9 @@ export const Button = ({
   </Pressable>
 );
 
-export const IconCircle = ({ name, onPress, size = 40 }: { name: any; onPress?: () => void; size?: number }) => (
-  <Pressable onPress={onPress} style={[mk().circle, { width: size, height: size, borderRadius: size / 2 }]}>
+export const IconCircle = ({ name, onPress, size = 40, label }: { name: any; onPress?: () => void; size?: number; label?: string }) => (
+  // hitSlop keeps the touch area at least 44x44 and the label lets screen readers name an icon-only button
+  <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label ?? String(name).replace(/-outline$/, "").replace(/-/g, " ")} hitSlop={Math.max(0, (44 - size) / 2)} style={[mk().circle, { width: size, height: size, borderRadius: size / 2 }]}>
     <Ionicons name={name} size={size * 0.5} color={colors.text} />
   </Pressable>
 );
