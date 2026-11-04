@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Routiq – UI and UX Design</title>
+<style>
+ body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f6f6;color:#111;line-height:1.5}
+ header{background:#000;color:#fff;padding:20px 32px} header h1{margin:0;font-size:22px}
+ main{max-width:960px;margin:0 auto;padding:24px}
+ section{background:#fff;border-radius:16px;padding:24px;margin-bottom:24px}
+ h2{margin-top:0} h3{margin-bottom:4px} table{border-collapse:collapse;width:100%;font-size:14px}
+ td,th{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top} th{background:#f0f0f0}
+ code{background:#eee;padding:1px 5px;border-radius:4px}
+ .sw{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+ .sw div{width:120px;border:1px solid #ddd;border-radius:12px;overflow:hidden;font-size:12px}
+ .sw i{display:block;height:48px} .sw span{display:block;padding:6px 8px}
+ .flow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 16px}
+ .flow b{background:#f0f0f0;border-radius:10px;padding:6px 10px;font-weight:600;font-size:13px}
+ .flow em{font-style:normal;color:#888}
+ .art{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px} .art img{height:120px;border-radius:12px;background:#f3f3f3}
+ .ok{color:#04753F;font-weight:600} .no{color:#C81700;font-weight:600}
+ @media print{header{background:#fff;color:#000}section{break-inside:avoid}}
+</style></head><body>
+<header><h1>Routiq — UI and UX Design</h1><div>Design language · Screens · User flows · Accessibility · What is still open</div></header>
+<main>
+
+<section id="intro"><h2>1. Design goals</h2>
+<p>Routiq is a ride-hailing app for India (rider app and driver app in one). The interface is built around four goals: a booking takes very few taps, the rider always knows what is happening, nothing ever blocks a booking, and the app stays readable in sunlight (light mode) and at night (dark mode).</p>
+<table><tr><th>Goal</th><th>How the design delivers it</th></tr>
+<tr><td>Fast booking</td><td>Home shows recent places and the vehicle tiles (Auto, Trip, Bike, Reserve, Carpool). Choosing a tile carries the vehicle through to the ride list and pre-selects it.</td></tr>
+<tr><td>Always informed</td><td>One progress bar on the trip screen with minutes to arrival counting down (4, 3, 2, 1, arrived), a moving vehicle on the map, and a share link anyone can open.</td></tr>
+<tr><td>Never blocked</td><td>No surge wording is shown. Prices show before and after an offer. The rider alone chooses the route; the shortest is the default.</td></tr>
+<tr><td>Private by default</td><td>While searching, the rider sees no driver names. After a ride the driver card shows only what is needed (name, vehicle, plate, rating).</td></tr>
+<tr><td>Works in any light</td><td>Light and dark palettes, with accent text colours checked for 4.5:1 contrast.</td></tr></table>
+<div class="art">
+ <img src="../assets/illustrations/map-driver.webp" alt="Driver on a map illustration">
+ <img src="../assets/illustrations/car-pair.webp" alt="Two cars illustration">
+ <img src="../assets/illustrations/safety-shield.webp" alt="Safety shield illustration">
+ <img src="../assets/illustrations/commute-map.webp" alt="Commute map illustration">
+</div></section>
+
+<section id="language"><h2>2. Design language</h2>
+<h3>Colour (design tokens in <code>constants/theme.ts</code>)</h3>
+<p>Every screen reads colours from one place, so light and dark mode switch together and nothing uses a raw hex value.</p>
+<div class="sw">
+ <div><i style="background:#fff"></i><span>bg<br>#FFFFFF / #121212</span></div>
+ <div><i style="background:#F3F3F3"></i><span>card<br>#F3F3F3 / #232323</span></div>
+ <div><i style="background:#000"></i><span>ink (buttons)<br>#000 / #FFF</span></div>
+ <div><i style="background:#6B6B6B"></i><span>muted text<br>#6B6B6B / #A3A3A3</span></div>
+ <div><i style="background:#276EF1"></i><span>blue<br>#276EF1</span></div>
+ <div><i style="background:#05944F"></i><span>green<br>#05944F</span></div>
+ <div><i style="background:#E11900"></i><span>red<br>#E11900</span></div>
+ <div><i style="background:#D93A1B"></i><span>promo<br>#D93A1B</span></div>
+</div>
+<h3>Type</h3>
+<p>Plus Jakarta Sans in five weights (Regular, Medium, SemiBold, Bold, ExtraBold). Body text is 16px. Nothing is below 12px.</p>
+<h3>Shape and layout</h3>
+<p>Rounded cards (14 to 18px radius), a floating pill tab bar (Home, Services, Activity, Account) that takes real space at the bottom of the screen so taps reach it, 20px side gutters, black primary buttons, grey secondary buttons.</p>
+<h3>Motion</h3>
+<p>Animated logo on the splash screen, intro slides with illustrations, a moving vehicle sprite on the map, and a single progress bar with the percentage and minutes left.</p></section>
+
+<section id="screens"><h2>3. Screen map</h2>
+<table><tr><th>Area</th><th>Screens</th><th>Purpose</th></tr>
+<tr><td>First run</td><td>Splash, intro slides, sign-in (phone, Google, Apple)</td><td>Show the brand, explain the app, get the rider in.</td></tr>
+<tr><td>Rider tabs</td><td>Home, Services, Activity, Account</td><td>Book, browse services, see past and upcoming rides, manage the profile.</td></tr>
+<tr><td>Booking</td><td>Where to, Choose a ride, Confirm pickup, Schedule picker</td><td>Pick places, vehicle, time, payment and offers.</td></tr>
+<tr><td>During a ride</td><td>Trip (progress bar, map, vehicle), Chat, Share trip, Shared ride page</td><td>Track the driver, talk to them, share the ride.</td></tr>
+<tr><td>Money</td><td>Wallet, Add cash, Pay with, Promo codes, Routiq One (paywall), Referral</td><td>Pay, top up, apply offers, join the membership.</td></tr>
+<tr><td>Safety</td><td>Safety centre, Trusted contacts, RideCheck, Audio recording, Safe arrival, Women rider preference, Account checkup</td><td>Make the rider feel safe and in control.</td></tr>
+<tr><td>Help and data</td><td>Help, Help topic, Inbox, Notifications, Commute, Favourites, Data and privacy</td><td>Support and personalisation.</td></tr>
+<tr><td>Driver app</td><td>Driver home (map first), request sheet with slide to accept, earnings, status, driver account and documents</td><td>Let a driver go online, take trips and track earnings.</td></tr></table></section>
+
+<section id="flows"><h2>4. Key user flows</h2>
+<h3>Book a ride now</h3>
+<div class="flow"><b>Home</b><em>→</em><b>Tap a vehicle tile or search</b><em>→</em><b>Where to</b><em>→</em><b>Choose a ride (price before and after offer)</b><em>→</em><b>Confirm pickup</b><em>→</em><b>Trip (one progress bar)</b><em>→</em><b>Rate the driver</b></div>
+<h3>Book for later</h3>
+<div class="flow"><b>Where to</b><em>→</em><b>"Pickup now" chip</b><em>→</em><b>Pick a time</b><em>→</em><b>Schedule (Reserve 20% off)</b><em>→</em><b>Activity: Upcoming</b><em>→</em><b>Reminder 10 min before, Home banner when due, Start now</b></div>
+<h3>Share a ride</h3>
+<div class="flow"><b>Trip</b><em>→</em><b>Share trip</b><em>→</em><b>Link with ride details and live map</b><em>→</em><b>Send to contacts or any app</b><em>→</em><b>Friend opens the page, no sign-in</b></div>
+<h3>Join Routiq One</h3>
+<div class="flow"><b>Account or Activity banner</b><em>→</em><b>Plans</b><em>→</em><b>Choose how to pay</b><em>→</em><b>Test payment</b><em>→</em><b>Member</b></div>
+<h3>Driver takes a trip</h3>
+<div class="flow"><b>Driver home (map)</b><em>→</em><b>Go online</b><em>→</em><b>Request sheet</b><em>→</em><b>Slide to accept</b><em>→</em><b>Stages: pickup, arrived, trip, done</b><em>→</em><b>Earnings</b></div></section>
+
+<section id="rules"><h2>5. UX principles applied</h2>
+<table><tr><th>Principle</th><th>In the app</th></tr>
+<tr><td>Consistency</td><td>Same header, buttons, cards and icons everywhere; one colour source.</td></tr>
+<tr><td>Feedback</td><td>Loading skeletons, a single progress bar with minutes and percent, notifications for booked, arriving and arrived (with a ride card), offline banner when the connection drops.</td></tr>
+<tr><td>Error prevention</td><td>Confirmation sheet before hard-to-undo actions (for example cancelling the Routiq One membership).</td></tr>
+<tr><td>Easy reversal</td><td>Cancel for scheduled rides, a Start now option, back on every screen, a logout in Account.</td></tr>
+<tr><td>Recognition over recall</td><td>Recent places, favourites, saved commute, vehicle pictures that match the real vehicle (auto shows an auto, car shows a car).</td></tr>
+<tr><td>User control</td><td>The rider picks the route, the vehicle, and who sees the ride; notification frequency is Fewer, Daily or Often.</td></tr>
+<tr><td>Minimal design</td><td>One progress bar instead of two; offers shown as old price crossed out then new price.</td></tr></table></section>
+
+<section id="a11y"><h2>6. Accessibility and quality check</h2>
+<p>The app was reviewed against the UI/UX Pro Max checklist (accessibility, touch, typography, forms, navigation).</p>
+<h3>Text contrast (WCAG minimum 4.5:1 for normal text)</h3>
+<table><tr><th>Text colour</th><th>Light mode (on white / card)</th><th>Dark mode (on page / card)</th><th>Result</th></tr>
+<tr><td>Main text</td><td>21.0 / 18.9</td><td>18.7 / 15.7</td><td class="ok">Pass</td></tr>
+<tr><td>Muted text</td><td>5.3 / 4.8</td><td>7.4 / 6.2</td><td class="ok">Pass</td></tr>
+<tr><td>Blue text (before)</td><td>4.6 / 4.1</td><td>4.1 / 3.4</td><td class="no">Fail on cards and in dark</td></tr>
+<tr><td>Green text (before)</td><td>3.9 / 3.5</td><td>4.8 / 4.0</td><td class="no">Fail</td></tr>
+<tr><td>Red text (before)</td><td>4.8 / 4.4</td><td>3.9 / 3.3</td><td class="no">Fail on cards and in dark</td></tr>
+<tr><td>Accent text (after fix: blueT, greenT, redT, promoT)</td><td>5.1 to 5.3</td><td>6.2 to 7.6</td><td class="ok">Pass</td></tr></table>
+<h3>Other checks</h3>
+<table><tr><th>Check</th><th>Status</th></tr>
+<tr><td>Touch targets at least 44×44</td><td class="ok">Round icon buttons enlarged with a hidden touch area; bottom tabs are 60px tall.</td></tr>
+<tr><td>No text under 12px</td><td class="ok">Six 11px labels raised to 12px.</td></tr>
+<tr><td>Icon-only buttons have a name for screen readers</td><td>Shared icon button done. Other icon-only buttons still to label.</td></tr>
+<tr><td>Light and dark mode</td><td class="ok">Both supported, with a system option.</td></tr>
+<tr><td>Reduced motion setting respected</td><td class="no">Not yet.</td></tr>
+<tr><td>Works with no sign-in for shared links</td><td class="ok">Shared ride page needs no account.</td></tr></table></section>
+
+<section id="open"><h2>7. Known limits and next steps</h2>
+<ul>
+<li>Label the remaining icon-only buttons, and honour the phone's reduce-motion setting.</li>
+<li>The live map in a shared link needs the tracking server hosted online (it runs on the developer's laptop today).</li>
+<li>Scheduled rides remind the rider but do not start by themselves at the set time.</li>
+<li>Screenshots of each screen can be added to this document once a final build is on a phone.</li>
+</ul></section>
+</main></body></html>
